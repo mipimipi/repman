@@ -1,0 +1,9 @@
+repman*
+completions*
+Cargo.lock
+
+!repman-all
+
+# Added by cargo
+
+/target

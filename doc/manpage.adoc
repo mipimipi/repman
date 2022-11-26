@@ -1,0 +1,339 @@
+= repman(8)
+Michael Picht
+Version 0.0.0
+:manmanual: REPMAN
+:mansource: REPMAN
+:man-linkstyle: blue R <>
+
+== NAME
+
+repman - REPository MANager for Arch Linux packages
+
+== SYNOPSIS
+
+[%hardbreaks]
+`*repman COMMAND REPOSITORY [ ARGUMENTS ]*`
+`*repman {-h | --help | help}*`
+`*repman --version*`
+
+[%hardbreaks]
+`*repman-all REPMAN-COMMAND [ ARGUMENTS ]*`
+`*repman-all {-h | --help | help}*`
+`*repman-all --version*`
+
+== DESCRIPTION
+
+Management of custom package repositories.
+
+With *repman*, packages can be built and added to repositories, being removed from them or being updated. *repman* is suited for managing local and remote repositories. Under the hood, it uses tools like _makechrootpkg_, _makepkg_, _repo-add_ and _repo-remove_. To not affect the host system (i.e., the system that is used to run *repman*), packages are built in _chroot_ containers using _makechrootpkg_. Each repository has its own chroot container with a repository-specific _pacman.conf_ file. The data transfer between the local file system and remote repositories is done via _rsync_.
+
+== RETURN VALUE
+
+The program returns 0 if it was executed successfully, values > 0 if an error occurred.
+
+== COMMANDS
+
+*repman* must either be called with a command usually followed by a repository name and - depending on the command - further options and arguments, or with the help option (*--help* or *-h*). Irrelevant options are silently ignored, and may not be checked for correctness.
+
+To execute a *repman* command for all configured repositories, use *repman-all*. It must be called with the corresponding *repman* command (without "repman"  and a repository name) incl. arguments.
+
+Example (update all packages of all repositories):
+
+    $ repman-all update --all
+
+=== add
+
+Build and add packages to a repository. If the *--sign* option is set, the package files are signed. The build scripts (i.e., PBGBUILD files) for the packages to be added can come from two different sources: The _Arch User Repository (AUR)_ or the local file system. For AUR packages, use the *--aur* option. *--directory* is used to specify the location of build scripts stored in the local files system. *--aur* and *--directory* can be used multiple times and can be combined in one call of *repman add*.
+
+If *--nochroot* is set, the build does not take place in a chroot container. Building in a chroot container is the default.
+
+Example (build and add `pkg1` and `pkg2` from _AUR_ and some other packages from PKGBUILD files located in (local) directories `mydir1` and `mydir2` to `myrepo` ):
+
+  $ repman add --repo myrepo --directory mydir1 --aur pkg1 --aur pkg2 --directory mydir2
+
+*repman add* creates a chroot container for the repository in the background if it does not yet exist. For details about the creation of a chroot container see the *mkchroot* command. If a chroot container must be adjusted manually before the first build, create one with *repman mkchroot* before using *repman add* - but adjustments to it can also be done automatically via script. If distributed builds are required, adjust the corresponding *makepkg.conf* file accordingly - see the *mkchroot* command and the *NOTES* section for details.
+
+=== cleanup
+
+Clean up the database of a repositories. Sometimes a repository is in an inconsistent state (see *TROUBLESHOOTING*). *repman cleanup* can be used to make it consistent again.
+
+=== clear
+
+Delete local data of a repository. Called with *--chroot*, *repman clear* deletes the chroot container of a repository, called with *--cache* it deletes the local copy/cache of the repository if it is remote. Local repositories (i.e., repositories where the repository directory is located in the local file system) do not have such a copy/cache directory and thus, calling this command with *--cache* does not make sense and does not change the repository directory at all.
+
+=== help
+
+Display usage information. Execute *repman help* followed by the name of a command to get usage information about that command. If *repman help* is executed without any command, general usage information for *repman* is provided.
+
+=== ls
+
+List all packages of a repository. The list contains information whether or not a package is signed and if it is a dependency of another package of that repository.
+
+=== lsrepos
+
+List the names of all repositories that are definied in the configuration file *repos.conf* (see below).
+
+=== mkchroot
+
+Creates a chroot container for a repository. If such a container already exists, the existing one is deleted prior to creating a new one. This command is useful if the chroot container must be modified before the first build happens.
+
+Which *pacman.conf* and *makepkg.conf* files are used for the chroot container is determined as follows:
+
+For *pacman.conf* the first file of the sequence
+
+    ~/.config/repman/pacman-<REPOSITORY>.conf
+    ~/.config/repman/pacman.conf
+    /etc/pacman.conf
+
+that exists is used.
+
+For *makepkg.conf* the first file of the sequence
+
+    ~/.config/repman/makepkg-<REPOSITORY>.conf
+    ~/.config/repman/makepkg.conf
+    /usr/share/devtools/makepkg-<ARCHITECTURE>.conf
+    /etc/makepkg.conf
+
+that exists is used.
+
+Thus, one can create repository-specific *pacman.conf* or *makepkg.conf* files or files that are used for all repositories. 
+
+Additional steps can be executed automatically via script directly after a chroot container was created. The first script of the sequence
+
+    ~/.config/repman/adjustchroot-<REPOSITORY>
+    ~/.config/repman/adjustchroot
+
+that exists is executed. If no such script exists, none is executed. The script gets two parameters passed:
+
+    . Repository name
+    . Path to the chroot container for that repository
+
+With this approach, one can create repository-specific scripts or a script that is executed for all repositories.<REPOSITORY>
+
+If distributed builds are enabled in *makepkg.conf* (i.e., `distcc` is set in `BUILDENV`), the *distcc* package is installed in the chroot container as well. In addition, the *distcc* package must be installed on your system. This must be done manually.
+
+The described behavior wrt. selection of *makepkg.conf*, *pacman.conf* and the *adjustchroot* script also applies to the implicit creation of chroot containers during *repman add* and *repman update*. 
+
+=== rm
+
+Remove packages from a repository. The package names must be given as a space-separated list. In case a package is a dependency of another package in the repository, the user is asked for confirmation. This behavior can be switched off with *--noconfirm*.
+
+Example (remove packages `pkg1` and `pkg2` from `myrepo`):
+
+  $ repman rm --repo myrepo pkg1 pkg2
+
+=== sign
+
+Sign either all or only specific packages of a repository. To sign all packages of a repository, use the flag *--all*. Otherwise, packages to be signed must be specified explicitely. The key to be used must be stored in the environment variable GPGKEY or defined in the relevant `makepkg.conf` file.
+
+=== update
+
+Update outdated _AUR_ packages of a repository. To update all packages of a repository, use the flag *--all*. Otherwise packages to be updated must be specified explicitely.
+
+If *--nochroot* is set, the build does not take place in a chroot container. Building in a chroot container is the default.
+
+Before updates from _AUR_ are applied, the user is asked for confirmation. This behavior can be switched off with *--noconfirm*.
+
+Updated packages are signed automatically if the package was signed before the update and if the environment variable _GPGKEY_ is set.
+
+*repman update* creates a chroot container for the repository in the background if it does not yet exist. For details about the creation of a chroot container see the *mkchroot* command. If a chroot container must be adjusted before the first build, create one with *repman mkchroot* before using *repman update*. If distributed builds are required, adjust the corresponding *makepkg.conf* file accordingly - see the *mkchroot* command and the *NOTES* section for details.
+
+To update packages that do not come from the _AUR_ but whose PKGBUILD is located in the local file system, use *repman add*. Make sure, that the PKGBUILD specifies a higher version number than the version that is already contained in the repository. *repman add* makes sure that the artefacts belonging to an older package version are removed consistently.   
+
+== OPTIONS
+
+=== --help, -h
+
+General usage information for *repman*.
+
+=== --all
+
+Apply command to all packages. This flag is available for *repman sign* and *repman update*.
+
+=== --aur <PACKAGE>, -a <PACKAGE>
+
+_AUR_ package that shall be added to a repository.
+
+=== --cache
+
+Flag that refers to the local copy/cache of a remote repository.
+
+=== --chroot
+
+Flag that refers to the chroot container for a repository.
+
+=== --clean, -c
+
+Remove the chroot container after executing a command. This flag is available for *repman add* and *repman update*.
+
+=== --directory <DIRECTORY>, -d <DIRECTORY>
+
+Directory where a PKGBUILD file is stored. The corresponding packages will be built and added to a repository.
+
+=== --nochroot, -n
+
+Do not build packages in chroot container. Building in a chroot container is the default. This option is useful if *repman* is run inside a container (as part of a CI/CD pipeline, for example), where it is impossible or difficult to run privileged. 
+
+=== --noconfirm
+
+Do not ask the user for confirmation.
+
+=== --sign, -s
+
+Sign packages with _gpg_. The gpg key to be used must be stored in the environment variable _GPGKEY_ or defined in the relevant `makepkg.conf` file. 
+
+== CONFIGURATION
+
+Repositories which are to be managed with *repman* must be configured in the configuration file *repos.conf* (see below). The configuration is done in _TOML_ format:
+
+    [REPOSITORY]
+    Server = "rsync://USER@SERVER:/PATH/TO/DIRECTORY/$arch"
+    DBName = "DB name of the repository"
+    SignDB = true
+
+*Server* is the URL to the remote directory where the repository is located. Two schemes are supported: _file_ for local and _rsync_ for remote repositories. Like in *pacman.conf*, *$arch* and *$repo* can be used as placeholders for the current architecture (e.g. x86_64) and the current repository name.
+
+*SignDB* specifies whether the repository database is signed after it was changed (set to `true`) or not (set to `false`). To sign the database, the environment variable _GPGKEY_ or defined in the relevant `makepkg.conf` file.
+
+*DBName* is optional. It allows to set the name of the repository DB explicitly. If *DBName* is not set, the repository name REPOSITORY is used as DB name. With this approach it is possible to manage the repository by *repman* under a different name than it is configured later on in `/etc/pacman.conf`. In `pacman.conf` the name of the repositoty DB must be used. This can be required for some edge cases, but usually *DBName* does not have to be set.
+
+== ENVIRONMENT
+
+=== GPGKEY
+
+This environment variable is expected to contain the _gpg_ key that is used to sign packages and repository databases. If this variable is not set, *repman* will try to extract the key for the relevant `makepkg.conf` file.
+
+== FILES AND DIRECTORIES
+
+User-specific configuration files are stored in `${XDG_CONFIG_HOME}/repman`, user-specific data of *repman* in `${XDG_CACHE_HOME}/repman`. Since `$XDG_CONFIG_HOME` defaults to `~/.config` and `$XDG_CACHE_HOME` to `~/.cache`, these defaults will be used for the rest of this documentation.
+
+=== ~/.config/repman/repos.conf
+
+Contains information about the repositories that are managed by *repman* (see *CONFIGURATION*).
+
+=== ~/.config/repman/makepkg-<REPOSITORY>.conf, ~/.config/repman/makepkg.conf
+
+*makepkg.conf* files that are used when creating a chroot container. See the *mkchroot* command for further details.
+
+=== ~/.config/repman/pacman-<REPOSITORY>.conf, ~/.config/repman/pacman.conf
+
+*pacman.conf* files that are used when creating a chroot container. See the *mkchroot* command for further details.
+
+=== ~/.config/repman/adjustchroot-<REPOSITORY>, ~/.config/repman/adjustchroot
+
+Script that is executed directy after the creation of a chroot container. See the *mkchroot* command for further details. The script must be executable.
+
+=== ~/.cache/repman/chroots
+
+Directory where the chroot containers for the different repositories managed with *repman* are stored. The root directory of a repository-specific chroot container is stored in `~/.cache/repman/chroots/<REPOSITORY>`.
+
+=== ~/.cache/repman/repos
+
+Directory where the local copies of the remote repository directories managed with *repman* are stored. The files of a specific repository are located in `~/.cache/repman/repos/<REPOSITORY>`.
+
+=== ~/.cache/repman/locks
+
+To avoid concurrent write access to a repository, lock files are written. The lock file for a specific repository is `~/.cache/repman/locks/<REPOSITORY>`.
+
+=== ~/.cache/repman/tmp
+
+This directory contains temporary data that is only created and used during one run of *repman*. 
+
+== NOTES
+
+=== Speeding up the build process by storing chroot containers in main memory
+
+The build process can be accelerated by using _tmpfs_ for _chroot_ containers. _tmpfs_ is a file system that resides in the main memory. It should only be used if sufficient memory is available since otherwise the _swap space_ will be used. _tmpfs_ can be used for all _chroot_ containers or only for _chroot_ container of dedicated repositories. To use it for all _chroot_ containers, add the following line to `/etc/fstab`:
+
+    tmpfs   /home/myuser/.cache/repman/chroots         tmpfs   rw,nodev,suid,size=4G          0  0
+
+The mount path and the size must of course be adjusted to the specific context and needs.
+
+=== Distributed compiling (distcc)
+
+Distributed builds in chroot containers can either be enabled before a container is created or after.
+
+To enable it before a chroot container is created, execute the following steps:
+
+1. Enable and configure *distcc* in the `makepkg.conf` file that is used for the chroot container (see the *mkchroot* command and the *distcc* documentation in the https://wiki.archlinux.org/title/Distcc[Arch Linux Wiki] or the https://archlinuxarm.org/wiki/Distributed_Compiling[Arch Linux ARM Wiki]).
+
+2. Install distcc on your system:
+    
+    $ pacman -Syu distcc
+
+3. Create the chroot container:
+
+    $ repman mkchroot --repo <REPOSITORY>
+   
+If a container already exists, execute the following steps:
+
+1. Install *distcc* on your system and in the chroot container:
+
+    $ pacman -Syu distcc    
+    $ arch-nspawn ~/.cache/repman/chroots/<REPOSITORY>/root pacman -Syu distcc
+
+2. Configure the chroot for distributed builds by adjusting `~/.cache/repman/chroots/<REPOSITORY>/root/etc/makepkg.conf` accordingly, see the *distcc* documentation in the https://wiki.archlinux.org/title/Distcc[Arch Linux Wiki] or the https://archlinuxarm.org/wiki/Distributed_Compiling[Arch Linux ARM Wiki].
+
+3. Remove the old container copy and lock file: 
+
+    $ cd ~/.cache/repman/chroots/<REPOSITORY>    
+    $ sudo rm -rd <YOUR USER NAME> <YOUR USER NAME>.lock
+
+== TROUBLESHOOTING AND FAQ
+
+=== Adding packages to a remote repository leads to an rsync error
+
+This error can happen, if in the PKGBUILD file of the package the _epoch_ is set. In this case, the name of the package contains a colon. If the system that hosts the remote repository does not allow colons in file names, _rsync_ throws an error.
+  
+Unfortunately, there's no other solution than either changing the remote system / hoster or to not add such a packages to the repository. Since inconsistencies can occur (after such an error occurred, the repository database can, for example, contain a package but the corresponding package tarball is not stored), *repman cleanup* helps to make the repository consistent again.
+
+=== The build process stops because a dependency is missing
+
+Normally, this happens because a dependency is not maintained in the PKGBUILD script of the package. Often, for example, package maintainers do not list _git_ as make dependency, but since *repman* does the build in a chroot container, _git_ is not installed there by default. 
+
+If you are the owner of the package you want to build/add, adjust the corresponding PKGBUILD file and run *repman add* again.
+    
+Otherwise, if the dependency is in the official Arch Linux repositories, add it to the chroot container that is used for your repository by executing as root:
+
+    $ pacstrap ~/.cache/repman/chroots/<REPOSITORY> <DEPENDENCY>
+
+Run *repman add* again.
+
+Otherwise, if the dependency is an _AUR_ package, add it to your repo via *repman add*. Now, try to add the package again via *repman add*.
+
+=== During the build process, the error "error: PACKAGE: signature from NAME, MAIL ADDRESS is invalid" occurs
+
+This is caused by a package or a dependency that is signed but the key is not known to _gpg_. The problem can be solved by making the key known:
+
+    $ gpg --recv-keys <KEY-ID>
+
+If the maintainer of the package did not put the key into the _validpgpkeys_ array in the PKGBUILD file, the key must also be signed locally to indicate that you trust it:
+
+    $ gpg --lsign-key <KEY-ID>
+
+Run *repman add* again.
+
+=== A package of a remote repository requires dependencies from another custom repository
+
+Add the custom repository to the _pacman.conf_ file that _repman_ uses for the remote repository:
+
+    ~/.config/repman/pacman-<REPOSITORY>.conf
+
+=== The chroot container of a repository cannot be deleted since it contains read-only file systems
+
+This situation can occur if the creation of the chroot container was interrupted by the user.
+
+Type
+
+    $ mount
+    
+to find out the file systems and their mount points. Then, unmount each file system with 
+
+    $ umount <MOUNT-POINT>
+
+Now you should be able to remove the chroot container.
+
+== COPYRIGHT
+
+Copyright \(C) 2019-2022, Michael Picht <mipi@fsfe.org>.  Licensed under the GNU General Public License version 3 or later, see https://gnu.org/licenses/gpl.html
+Version 

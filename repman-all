@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+# at least one argument is required
+if [[ -z $1 ]]; then
+    echo "repman-all must be called with at least one argument" 
+    exit 1
+fi    
+
+# print help
+if [[ $1 == "-h" || $1 == "--help" || $1 == "help" ]]; then
+    cat << EOF
+Copyright (C) 2022 Michael Picht <https://gitlab.com/mipimipi/repman>
+
+repman helps to manage remote custom repositories.
+
+Web site: https://gitlab.com/mipimipi/repman/
+
+repman comes with ABSOLUTELY NO WARRANTY. This is free software, and you are
+welcome to redistribute it under certain conditions. See the GNU General Public
+Licence for details.
+
+Execute a repman command for all configured repositories
+
+Usage:
+  repman-all {repman-command | -h | --help | help}
+
+Example:
+    repman-all clear --chroot
+EOF
+
+    exit 0
+fi
+
+# print version
+if [[ $1 == "--version" ]]; then
+    repman --version
+    exit 0
+fi
+
+# extract repman command
+cmd=$1
+shift
+
+# execute repman command for all repositories
+for repo in $( repman lsrepos ); do
+    repman $cmd -r $repo $@
+done

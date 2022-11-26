@@ -1,0 +1,17 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: repman
+Upstream-Contact: Michael Picht <mipi@fsfe.org>
+Source: gitlab.com/mipimipi/repman
+
+Files: .gitignore
+       .gitlab-ci.yml
+       Cargo.toml
+       Makefile
+       PKGBUILD
+       README.adoc
+       CHANGELOG.md
+       repman-all
+       doc/*
+       src/*
+Copyright: 2019-2022 Michael Picht <mipi@fsfe.org>
+License: GPL-3.0-or-later
