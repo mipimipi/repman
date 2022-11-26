@@ -64,9 +64,9 @@ macro_rules! exec_on_repo {
     };
 }
 
-/// Generates temporary data (a directory for PKGBUILD file and a directory for
-/// the built package files), registers the removal of that data when leaving
-/// the current scope, and executes a code block
+/// Generates the directory for temporary data for the current process, registers
+/// the removal of that data when leaving the current scope, and executes a code
+/// block
 macro_rules! exec_with_tmp_data {
     ($code:block) => {
         let _ = ensure_tmp_dir()?;
@@ -227,47 +227,52 @@ where
         aur::try_init(aur_pkg_names).with_context(|| err_msg.clone())?;
 
         exec_with_tmp_data!({
-            // Create or update chroot container
-            prepare_chroot().with_context(|| err_msg.clone())?;
-
+            // Create tmp dirs for PKGBUILD scripts and package file
             let (pkgbuild_dir, pkg_dir) = ensure_pkg_tmp_dirs().with_context(|| err_msg.clone())?;
-            let mut built_pkgs: Vec<Pkg> = vec![];
 
-            // Build packages ...
-            for pkgbuild in
-                // ... from local directories
-                PkgBuild::from_dirs(pkgbuild_dirs)
-                    .with_context(|| err_msg.clone())?
-                    .iter()
-                    .chain(
-                        // ... by downloading package PKGBUILD files from AUR
-                        PkgBuild::from_aur(Some(aur_pkg_names), pkgbuild_dir)
-                            .with_context(|| err_msg.clone())?
-                            .iter(),
-                    )
+            // Collect paths to PKGBUILD scripts ...
+            let mut pkgbuilds: Vec<PkgBuild> = vec![];
+            // ... from local directories ...
+            for pkgbuild in PkgBuild::from_dirs(pkgbuild_dirs).with_context(|| err_msg.clone())? {
+                pkgbuilds.push(pkgbuild);
+            }
+            // ... and by downloading package PKGBUILD files from AUR
+            for pkgbuild in PkgBuild::from_aur(Some(aur_pkg_names), pkgbuild_dir)
+                .with_context(|| err_msg.clone())?
             {
-                match Pkg::build(
-                    pkgbuild,
-                    no_chroot,
-                    Some(sign),
-                    gpg_key(),
-                    local_dir(),
-                    chroot_dir(),
-                    &pkg_dir,
-                ) {
-                    Err(err) => {
-                        error!("{:?}", err);
-                        continue;
-                    }
-                    Ok(pkgs) => built_pkgs.extend(pkgs),
-                }
+                pkgbuilds.push(pkgbuild);
             }
 
-            // Add the successfully built packages to respository DB
-            add_pkgs_to_db(&built_pkgs).with_context(|| err_msg.clone())?;
+            if !pkgbuilds.is_empty() {
+                // Create or update chroot container
+                prepare_chroot().with_context(|| err_msg.clone())?;
 
-            if clean_chroot {
-                remove_chroot_dir().with_context(|| err_msg.clone())?;
+                // Build packages
+                let mut built_pkgs: Vec<Pkg> = vec![];
+                for pkgbuild in pkgbuilds {
+                    match Pkg::build(
+                        &pkgbuild,
+                        no_chroot,
+                        Some(sign),
+                        gpg_key(),
+                        local_dir(),
+                        chroot_dir(),
+                        &pkg_dir,
+                    ) {
+                        Err(err) => {
+                            error!("{:?}", err);
+                            continue;
+                        }
+                        Ok(pkgs) => built_pkgs.extend(pkgs),
+                    }
+                }
+
+                // Add the successfully built packages to respository DB
+                add_pkgs_to_db(&built_pkgs).with_context(|| err_msg.clone())?;
+
+                if clean_chroot {
+                    remove_chroot_dir().with_context(|| err_msg.clone())?;
+                }
             }
         });
     });
