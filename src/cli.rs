@@ -15,13 +15,7 @@ use std::path::PathBuf;
     repman (Custom Repository Management) 
     Copyright (C) 2019-2022 Michael Picht <https://gitlab.com/mipimipi/repman>
     
-    repman helps to manage remote custom repositories.
-    
-    Web site: https://gitlab.com/mipimipi/repman/
-    
-    repman comes with ABSOLUTELY NO WARRANTY. This is free software, and you are
-    welcome to redistribute it under certain conditions. See the GNU General Public
-    Licence for details.
+    repman helps to manage custom repositories for Arch Linux packages.
     "}
 )]
 pub struct Args {
