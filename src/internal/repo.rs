@@ -218,32 +218,32 @@ where
         ));
     }
 
-    lock!();
-    exec_on_repo!({
-        // Create (empty) repository DB if no DB exists
-        ensure_db().with_context(|| err_msg.clone())?;
+    // Initialize AUR information from AUR web interface
+    aur::try_init(aur_pkg_names, true).with_context(|| err_msg.clone())?;
 
-        // Initialize AUR information from AUR web interface
-        aur::try_init(aur_pkg_names, true).with_context(|| err_msg.clone())?;
+    exec_with_tmp_data!({
+        // Create tmp dirs for PKGBUILD scripts and package file
+        let (pkgbuild_dir, pkg_dir) = ensure_pkg_tmp_dirs().with_context(|| err_msg.clone())?;
 
-        exec_with_tmp_data!({
-            // Create tmp dirs for PKGBUILD scripts and package file
-            let (pkgbuild_dir, pkg_dir) = ensure_pkg_tmp_dirs().with_context(|| err_msg.clone())?;
+        // Collect paths to PKGBUILD scripts ...
+        let mut pkgbuilds: Vec<PkgBuild> = vec![];
+        // ... from local directories ...
+        for pkgbuild in PkgBuild::from_dirs(pkgbuild_dirs).with_context(|| err_msg.clone())? {
+            pkgbuilds.push(pkgbuild);
+        }
+        // ... and by downloading package PKGBUILD files from AUR
+        for pkgbuild in PkgBuild::from_aur(Some(aur_pkg_names), pkgbuild_dir)
+            .with_context(|| err_msg.clone())?
+        {
+            pkgbuilds.push(pkgbuild);
+        }
 
-            // Collect paths to PKGBUILD scripts ...
-            let mut pkgbuilds: Vec<PkgBuild> = vec![];
-            // ... from local directories ...
-            for pkgbuild in PkgBuild::from_dirs(pkgbuild_dirs).with_context(|| err_msg.clone())? {
-                pkgbuilds.push(pkgbuild);
-            }
-            // ... and by downloading package PKGBUILD files from AUR
-            for pkgbuild in PkgBuild::from_aur(Some(aur_pkg_names), pkgbuild_dir)
-                .with_context(|| err_msg.clone())?
-            {
-                pkgbuilds.push(pkgbuild);
-            }
+        if !pkgbuilds.is_empty() {
+            lock!();
+            exec_on_repo!({
+                // Create (empty) repository DB if no DB exists
+                ensure_db().with_context(|| err_msg.clone())?;
 
-            if !pkgbuilds.is_empty() {
                 // Create or update chroot container
                 prepare_chroot().with_context(|| err_msg.clone())?;
 
@@ -273,8 +273,8 @@ where
                 if clean_chroot {
                     remove_chroot_dir().with_context(|| err_msg.clone())?;
                 }
-            }
-        });
+            });
+        }
     });
 
     Ok(())
