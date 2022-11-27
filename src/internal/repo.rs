@@ -244,8 +244,10 @@ where
                 // Create (empty) repository DB if no DB exists
                 ensure_db().with_context(|| err_msg.clone())?;
 
-                // Create or update chroot container
-                prepare_chroot().with_context(|| err_msg.clone())?;
+                if !no_chroot {
+                    // Create or update chroot container
+                    prepare_chroot().with_context(|| err_msg.clone())?;
+                }
 
                 // Build packages
                 let mut built_pkgs: Vec<Pkg> = vec![];
@@ -863,8 +865,7 @@ pub fn make_chroot() -> anyhow::Result<()> {
 /// repman config directory):
 /// 1) ~/.config/repman/makepkg-<REPOSITORY-NAME>.conf
 /// 2) ~/.config/repman/makepkg.conf
-/// 3) /usr/share/devtools/makepkg-<SYSTEM-ARCHITECTURE>.conf
-/// 4) /etc/makepkg.conf
+/// 3) /etc/makepkg.conf
 /// The determination is only donw once. The result is stored in a static variable
 fn makepkg_conf() -> anyhow::Result<&'static Path> {
     static MAKEPKG_CONF: OnceCell<PathBuf> = OnceCell::new();
@@ -877,14 +878,10 @@ fn makepkg_conf() -> anyhow::Result<&'static Path> {
                 name()
             );
             let config_dir = config_dir().with_context(|| err_msg.clone())?;
-            let paths: [PathBuf; 4] = [
+            let paths: [PathBuf; 3] = [
                 config_dir.join("makepkg-".to_string() + name() + ".conf"),
                 config_dir.join("makepkg.conf"),
-                PathBuf::from(&format!(
-                    "/usr/share/devtools/makepkg-{}.conf",
-                    arch().with_context(|| err_msg)?
-                )),
-                PathBuf::from("/etc/makpkg.conf"),
+                PathBuf::from("/etc/makepkg.conf"),
             ];
             for path in paths {
                 if path.exists() {
@@ -1458,8 +1455,10 @@ where
 
             // Execute package updates
             exec_with_tmp_data!({
-                // Create or update chroot container
-                prepare_chroot().with_context(|| err_msg.clone())?;
+                if !no_chroot {
+                    // Create or update chroot container
+                    prepare_chroot().with_context(|| err_msg.clone())?;
+                }
 
                 let (pkgbuild_dir, pkg_dir) =
                     ensure_pkg_tmp_dirs().with_context(|| err_msg.clone())?;

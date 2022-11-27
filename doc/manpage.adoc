@@ -91,7 +91,6 @@ For *makepkg.conf* the first file of the sequence
 
     ~/.config/repman/makepkg-<REPOSITORY>.conf
     ~/.config/repman/makepkg.conf
-    /usr/share/devtools/makepkg-<ARCHITECTURE>.conf
     /etc/makepkg.conf
 
 that exists is used.

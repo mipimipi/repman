@@ -156,6 +156,7 @@ impl PkgBuild {
             "env",
             "-u",
             "SHELLOPTS",
+            "makepkg",
             "-c",
             "--noconfirm",
             "--needed",
