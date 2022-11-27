@@ -224,7 +224,7 @@ where
         ensure_db().with_context(|| err_msg.clone())?;
 
         // Initialize AUR information from AUR web interface
-        aur::try_init(aur_pkg_names).with_context(|| err_msg.clone())?;
+        aur::try_init(aur_pkg_names, true).with_context(|| err_msg.clone())?;
 
         exec_with_tmp_data!({
             // Create tmp dirs for PKGBUILD scripts and package file
@@ -1418,8 +1418,13 @@ where
             // repository
             let valid_pkg_names = valid_pkg_names(pkg_names).with_context(|| err_msg.clone())?;
 
-            // Initialize AUR information from AUR web interface
-            aur::try_init(&valid_pkg_names).with_context(|| err_msg.clone())?;
+            // Initialize AUR information from AUR web interface. If names of to
+            // be updated packages were submitted (i.e., `pkg_names` is
+            // `Some(...)`), error messages are printed if these package could
+            // not be found in AUR. If no packages names were submitted, no
+            // messages will be printed
+            aur::try_init(&valid_pkg_names, pkg_names.is_some())
+                .with_context(|| err_msg.clone())?;
 
             // Determine for which of these packages there are updates available
             // in AUR

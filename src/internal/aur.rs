@@ -65,8 +65,10 @@ struct AurData(PkgName2Base, PkgInfos);
 static AUR_DATA: OnceCell<AurData> = OnceCell::new();
 
 /// Retrieves information from AUR for packages with names contained in
-/// pkg_names. The data is stored in global variables
-pub fn try_init<S>(pkg_names: &[S]) -> anyhow::Result<()>
+/// pkg_names. The data is stored in global variables. If `check_exists` is
+/// true, an error messages are printed for packages that could be found
+/// in AUR
+pub fn try_init<S>(pkg_names: &[S], check_exists: bool) -> anyhow::Result<()>
 where
     S: AsRef<str> + Display + Eq + Hash,
 {
@@ -116,13 +118,15 @@ where
             }
         }
 
-        // Print error messages for packages that could not be retrieved from AUR
-        for pkg_name in pkg_names {
-            if !pkg_name2base.contains_key(pkg_name.as_ref()) {
-                error!(
-                    "No information could not be retrieved from AUR for package {}",
-                    pkg_name
-                );
+        if check_exists {
+            // Print error messages for packages that could not be retrieved from AUR
+            for pkg_name in pkg_names {
+                if !pkg_name2base.contains_key(pkg_name.as_ref()) {
+                    error!(
+                        "No information could not be retrieved from AUR for package {}",
+                        pkg_name
+                    );
+                }
             }
         }
     }
