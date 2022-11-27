@@ -38,7 +38,7 @@ pub fn repos() -> anyhow::Result<&'static CfgRepos> {
 	let err_msg = "Cannot read configuration file".to_string();
         let mut repos = CfgRepos::new();
 	let config_file = config_dir().with_context(||err_msg.clone())?.join(CFG_FILE_PATH);
-	
+
 	match fs::read_to_string(config_file)
 	    .with_context(|| err_msg.clone())?
 	    .parse::<Value>()
@@ -85,7 +85,7 @@ pub fn repos() -> anyhow::Result<&'static CfgRepos> {
                                         }
                                     }
                                     &_ => {
-                                        warning!("Unknown field '{name}' in configuration file");
+                                        warning!("Unknown field '{k}' in configuration file");
                                         continue
 				    }
 				};
