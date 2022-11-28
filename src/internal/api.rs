@@ -85,9 +85,9 @@ pub fn mkchroot<S>(repo_name: &S) -> anyhow::Result<()>
 where
     S: AsRef<str> + Display + Eq + Hash,
 {
-    // TODO: error handling
+    let err_msg = format!("Cannot make chroot container for repository {}", repo_name);
 
-    repo::try_init(repo_name)?;
+    repo::try_init(repo_name).with_context(|| err_msg.clone())?;
 
     if repo::chroot_exists() {
         if Confirm::new()
@@ -96,15 +96,16 @@ where
                 repo_name
             ))
             .default(true)
-            .interact()?
+            .interact()
+            .with_context(|| err_msg.clone())?
         {
-            repo::remove_chroot_dir()?
+            repo::remove_chroot_dir().with_context(|| err_msg.clone())?
         } else {
             return Ok(());
         }
     }
 
-    repo::make_chroot()?;
+    repo::make_chroot().with_context(|| err_msg)?;
 
     Ok(())
 }

@@ -1001,37 +1001,6 @@ fn pacman_conf_for_chroot() -> anyhow::Result<PathBuf> {
     Ok(pacman_conf_new)
 }
 
-/// Determines the extension of package files from the relevant makepkg.conf
-/// file. The determination is only donw once. The result is stored in a static
-/// variable
-fn pkg_ext() -> anyhow::Result<&'static str> {
-    static PKG_EXT: OnceCell<String> = OnceCell::new();
-    Ok(PKG_EXT
-        .get_or_try_init(|| {
-            let err_msg = format!(
-                "Cannot determine package extension (PKG_EXT) for repository {}",
-                name()
-            );
-
-            lazy_static! {
-                static ref RE_PKG_EXT: Regex =
-                    Regex::new(r#"PKGEXT= *['|"]{1}(.+)['|"]{1}.*"#).unwrap();
-            }
-
-            let content = fs::read_to_string(makepkg_conf()?).with_context(|| err_msg.clone())?;
-
-            let captures = RE_PKG_EXT.captures(content.as_str());
-
-            #[allow(clippy::unnecessary_unwrap)]
-            if captures.is_some() && captures.as_ref().unwrap().get(1).is_some() {
-                Ok(captures.unwrap().get(1).unwrap().as_str().to_string())
-            } else {
-                Err(anyhow!(err_msg))
-            }
-        })?
-        .as_str())
-}
-
 /// Creates a package instance for the package name `pkg_name`. The package meta
 /// data is retrieved from the repository DB. Thus, the repository must contain
 /// the package
@@ -1064,6 +1033,37 @@ where
         db_path.parent().unwrap(),
         pkg_ext()?,
     )
+}
+
+/// Determines the extension of package files from the relevant makepkg.conf
+/// file. The determination is only donw once. The result is stored in a static
+/// variable
+fn pkg_ext() -> anyhow::Result<&'static str> {
+    static PKG_EXT: OnceCell<String> = OnceCell::new();
+    Ok(PKG_EXT
+        .get_or_try_init(|| {
+            let err_msg = format!(
+                "Cannot determine package extension (PKG_EXT) for repository {}",
+                name()
+            );
+
+            lazy_static! {
+                static ref RE_PKG_EXT: Regex =
+                    Regex::new(r#"PKGEXT= *['|"]{1}(.+)['|"]{1}.*"#).unwrap();
+            }
+
+            let content = fs::read_to_string(makepkg_conf()?).with_context(|| err_msg.clone())?;
+
+            let captures = RE_PKG_EXT.captures(content.as_str());
+
+            #[allow(clippy::unnecessary_unwrap)]
+            if captures.is_some() && captures.as_ref().unwrap().get(1).is_some() {
+                Ok(captures.unwrap().get(1).unwrap().as_str().to_string())
+            } else {
+                Err(anyhow!(err_msg))
+            }
+        })?
+        .as_str())
 }
 
 /// Prepares the chroot container for usage. I.e., if the container exists, it is
@@ -1144,19 +1144,21 @@ where
 /// If the current repository is local, an error is returned
 pub fn remove_cache_dir() -> anyhow::Result<()> {
     if !is_remote() {
-        return Err(anyhow!(
+        warning!(
             "Since '{}' is a local repository, there is no cache directory to be removed",
             name()
-        ));
+        );
+        return Ok(());
     }
 
     let err_msg = format!("Cannot remove cache directory for repository {}", name());
 
     if !local_dir().exists() {
-        return Err(anyhow!(
+        msg!(
             "Cache directory for repository {} does not exist. Nothing to remove",
             name()
-        ));
+        );
+        return Ok(());
     }
 
     lock!();
@@ -1168,10 +1170,11 @@ pub fn remove_cache_dir() -> anyhow::Result<()> {
 /// Removes chroot directory of the current repository
 pub fn remove_chroot_dir() -> anyhow::Result<()> {
     if !chroot_exists() {
-        return Err(anyhow!(
+        msg!(
             "Chroot directory for repository {} does not exist. Nothing to remove",
             name()
-        ));
+        );
+        return Ok(());
     }
 
     let err_msg = format!("Cannot remove chroot directory for repository {}", name());
