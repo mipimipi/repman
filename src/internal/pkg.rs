@@ -21,7 +21,7 @@ use std::{
 // from package file path
 lazy_static! {
     static ref RE_PKG_FILE: Regex =
-        Regex::new(r#"^(.*/)?(.+)-([^-]+)-([^-]+)-([^\.]+)(\.pkg\.tar\.[^\.]+)$"#).unwrap();
+        Regex::new(r#"^(.*/)?(.+)-([^-]+)-([^-]+)-([^-]+)(\.pkg\.tar\.[^\.]+)$"#).unwrap();
 }
 
 /// Package file
@@ -303,6 +303,14 @@ impl Pkg {
                 .context(err_msg);
         }
 
+        // Regular expression to check if a path represents a package file or a
+        // signature file of a package file of self
+        let re_pkg_or_sig_file: Regex = Regex::new(&format!(
+            "^(.*/)?{}-([^-]+)-([^-]+)-([^-]+)(\\.pkg\\.tar\\.[^\\.]+)(.sig)?$",
+            self.name()
+        ))
+        .with_context(|| err_msg.clone())?;
+
         for path in (glob(
             format!(
                 "{}*",
@@ -315,7 +323,14 @@ impl Pkg {
         .with_context(|| err_msg.clone())?)
         .flatten()
         {
-            if path.is_file() {
+            if path.is_file()
+                && re_pkg_or_sig_file.is_match(path.to_str().unwrap_or_else(|| {
+                    panic!(
+                        "Cannot check if file '{}' is a package or a sig file",
+                        path.display()
+                    )
+                }))
+            {
                 fs::remove_file(path).with_context(|| err_msg.clone())?;
             }
         }
