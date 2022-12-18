@@ -21,7 +21,7 @@ use std::{
 // from package file path
 lazy_static! {
     static ref RE_PKG_FILE: Regex =
-        Regex::new(r#"^(.*/)(.+)-([^-]+)-([^-]+)-([^\.]+)(\.pkg\.tar\.[^\.]+)$"#).unwrap();
+        Regex::new(r#"^(.*/)?(.+)-([^-]+)-([^-]+)-([^\.]+)(\.pkg\.tar\.[^\.]+)$"#).unwrap();
 }
 
 /// Package file
@@ -280,7 +280,7 @@ impl Pkg {
     }
 
     /// Removes all files belonging to package stored in package file from `dir`.
-    /// This comprises the package file itself and a potentially exsiting
+    /// This comprises the package file itself and a potentially existing
     /// signature file
     pub fn remove_from_dir<P>(&self, dir: P) -> anyhow::Result<()>
     where
