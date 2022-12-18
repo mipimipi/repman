@@ -93,7 +93,10 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
                 true if !pkg_names.is_empty() => Err(anyhow!(
                     "Either submit package names or set option '--all', but not both."
                 )),
-                false if pkg_names.is_empty() => Ok(()),
+                false if pkg_names.is_empty() => {
+                    warning!("Either submit package names or set option '--all'");
+                    Ok(())
+                }
                 _ => api::update(
                     repo_name,
                     *no_chroot,
