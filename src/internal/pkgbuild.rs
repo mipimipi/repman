@@ -44,7 +44,9 @@ impl TryFrom<PathBuf> for PkgBuild {
             return Err(anyhow!("'{}' is not a PKGBUILD file", file.display()));
         }
 
-        Ok(PkgBuild(file))
+        // Create new PkgBuild from the normalized version of file to avoid
+        // something like "some-path/./PKGBUILD"
+        Ok(PkgBuild(file.canonicalize()?))
     }
 }
 
