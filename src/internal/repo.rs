@@ -502,7 +502,7 @@ fn create_chroot() -> anyhow::Result<()> {
     let content = fs::read_to_string(makepkg_conf).with_context(|| err_msg.clone())?;
     let captures = RE_DISTCC.captures(content.as_str());
     #[allow(clippy::unnecessary_unwrap)]
-    let distcc = captures.is_some() && captures.as_ref().unwrap().get(1).is_some();
+    let distcc = captures.is_some() && captures.as_ref().unwrap().get(0).is_some();
 
     msg!("Creating chroot for repository {} ...", name());
 
