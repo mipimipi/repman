@@ -72,7 +72,7 @@ macro_rules! exec_with_tmp_data {
         let _ = ensure_tmp_dir()?;
         defer! {
             fs::remove_dir_all(
-		tmp_dir().unwrap_or_else(|_| panic!("Cannot assemble peth oftemporary directory"))
+		tmp_dir().unwrap_or_else(|_| panic!("Cannot assemble path of temporary directory"))
 	    ).unwrap_or_else(|_| panic!("Cannot remove temporary directory for PID '{}'", process::id()));
         }
 	$code
@@ -1365,7 +1365,11 @@ fn ssh_path_from_url(url: &Url) -> String {
         "{}{}:{}",
         url.username(),
         if let Some(host) = url.host_str() {
-            format!("@{}", host)
+            format!(
+                "{}{}",
+                if url.username().is_empty() { "" } else { "@" },
+                host
+            )
         } else {
             " ".to_string()
         },
