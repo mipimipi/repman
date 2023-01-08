@@ -411,11 +411,13 @@ where
         None => captures.get(1).unwrap().as_str().to_string(),
     };
 
+    // Not only pkgver is replaced by * but also pkgrel, since it turned out that
+    // there can be cases where the build result of a package has a different
+    // pkgrel than specified in the coresponding PKGBUILD
     Ok(format!(
-        "{}{}-*-{}-{}{}",
+        "{}{}-*-*-{}{}",
         dir_str,
         captures.get(2).unwrap().as_str(),
-        captures.get(4).unwrap().as_str(),
         captures.get(5).unwrap().as_str(),
         captures.get(6).unwrap().as_str()
     ))
