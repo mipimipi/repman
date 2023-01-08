@@ -13,6 +13,7 @@ const CFG_KEY_SIGN_DB: &str = "SignDB";
 /// Variables in configuration files
 const CFG_VAR_ARCH: &str = "$arch";
 const CFG_VAR_REPO: &str = "$repo";
+const CFG_VAR_DB: &str = "$db";
 
 /// File and directory names
 const CFG_FILE_PATH: &str = "repos.conf";
@@ -54,12 +55,7 @@ pub fn repos() -> anyhow::Result<&'static CfgRepos> {
                                 match k.as_ref() {
                                     CFG_KEY_SERVER => {
                                         if let Value::String(s) = v {
-					    // Replace variables for architecture
-					    // and repository name with their
-					    // corresponding values
-                                            server = s
-						.replace(CFG_VAR_ARCH, &arch()?.to_string())
-						.replace(CFG_VAR_REPO, name);
+					    server = s.to_string();
                                         } else {
                                             return Err(anyhow!(
                                                 "Server URL of repository '{name}' has incorrect structure"
@@ -97,6 +93,14 @@ pub fn repos() -> anyhow::Result<&'static CfgRepos> {
                             ));
                         }
                     }
+		    
+		    // Replace variables for architecture, repository name and
+		    // (if specified) DB name with their corresponding values
+                    server = server.replace(CFG_VAR_ARCH, &arch()?.to_string()).replace(CFG_VAR_REPO, name);
+		    if let Some(s) = &db_name {
+			server = server.replace(CFG_VAR_DB, &s)
+		    }
+		    
                     repos.insert(name.to_string(), CfgRepo{
 			server,
 			db_name,

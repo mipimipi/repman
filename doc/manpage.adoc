@@ -190,7 +190,7 @@ Repositories which are to be managed with *repman* must be configured in the con
     DBName = "DB name of the repository"
     SignDB = true
 
-*Server* is the URL to the remote directory where the repository is located. Two schemes are supported: _file_ for local and _rsync_ for remote repositories. Like in *pacman.conf*, *$arch* and *$repo* can be used as placeholders for the current architecture (e.g. x86_64) and the current repository name.
+*Server* is the URL to the remote directory where the repository is located. Two schemes are supported: _file_ for local and _rsync_ for remote repositories. Like in *pacman.conf*, *$arch*, *$repo* and *$db* can be used as placeholders for the current architecture (e.g. x86_64), the current repository name and the current DB name (if the DB name is set).
 
 *SignDB* specifies whether the repository database is signed after it was changed (set to `true`) or not (set to `false`). To sign the database, the environment variable _GPGKEY_ or defined in the relevant `makepkg.conf` file.
 
