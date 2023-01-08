@@ -13,5 +13,5 @@ Files: .gitignore
        repman-all
        doc/*
        src/*
-Copyright: 2019-2022 Michael Picht <mipi@fsfe.org>
+Copyright: 2019-2023 Michael Picht <mipi@fsfe.org>
 License: GPL-3.0-or-later
