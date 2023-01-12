@@ -662,8 +662,8 @@ fn ensure_pkg_tmp_dirs() -> anyhow::Result<(PathBuf, PathBuf)> {
     let tmp_dir: _ = ensure_tmp_dir().with_context(|| err_msg.clone())?;
 
     Ok((
-        ensure_dir(&tmp_dir.join(PKGBUILD_SUB_PATH)).with_context(|| err_msg.clone())?,
-        ensure_dir(&tmp_dir.join(PKG_SUB_PATH)).with_context(|| err_msg.clone())?,
+        ensure_dir(tmp_dir.join(PKGBUILD_SUB_PATH)).with_context(|| err_msg.clone())?,
+        ensure_dir(tmp_dir.join(PKG_SUB_PATH)).with_context(|| err_msg.clone())?,
     ))
 }
 
@@ -840,7 +840,7 @@ fn lock() -> anyhow::Result<()> {
 /// Returns the path to lock file of the repository
 fn lock_file() -> anyhow::Result<PathBuf> {
     let err_msg = format!("Cannot determine lock file for repository {}", name());
-    Ok(ensure_dir(&locks_dir().with_context(|| err_msg.clone())?)
+    Ok(ensure_dir(locks_dir().with_context(|| err_msg.clone())?)
         .with_context(|| err_msg)?
         .join(name()))
 }
@@ -1457,7 +1457,7 @@ where
                 {
                     return Ok(());
                 }
-                print!("\n");
+                println!();
             }
 
             // Execute package updates

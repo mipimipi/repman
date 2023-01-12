@@ -98,7 +98,7 @@ pub fn repos() -> anyhow::Result<&'static CfgRepos> {
 		    // (if specified) DB name with their corresponding values
                     server = server.replace(CFG_VAR_ARCH, &arch()?.to_string()).replace(CFG_VAR_REPO, name);
 		    if let Some(s) = &db_name {
-			server = server.replace(CFG_VAR_DB, &s)
+			server = server.replace(CFG_VAR_DB, s)
 		    }
 		    
                     repos.insert(name.to_string(), CfgRepo{
