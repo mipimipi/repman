@@ -5,7 +5,7 @@ Source: gitlab.com/mipimipi/repman
 
 Files: .gitignore
        .gitlab-ci.yml
-       Cargo.toml
+       *.toml
        Makefile
        PKGBUILD
        README.adoc
