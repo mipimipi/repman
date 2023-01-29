@@ -4,6 +4,7 @@ use arch_msgs::*;
 use duct::cmd;
 use std::{
     cmp::Eq,
+    ffi::OsStr,
     fmt::Display,
     hash::Hash,
     io::{prelude::*, BufReader},
@@ -103,6 +104,7 @@ impl PkgBuild {
     /// Build packages from PKGBUILD file with makechrootpkg
     pub fn build_with_makechrootpkg<P>(
         &self,
+        ignore_arch: bool,
         repo_dir: P,
         chroot_dir: P,
         pkg_dir: P,
@@ -115,25 +117,30 @@ impl PkgBuild {
             self.as_ref().display()
         );
 
-        let reader = cmd!(
-            "makechrootpkg",
-            "-r",
-            chroot_dir.as_ref(),
-            "-D",
-            repo_dir.as_ref(),
-            "-u",
-            "--",
-            "-c",
-            "--noconfirm",
-            "--needed",
-            "--syncdeps",
-        )
-        .dir(self.dir())
-        .env("PKGDEST", pkg_dir.as_ref())
-        .stderr_to_stdout()
-        .stderr_capture()
-        .reader()
-        .with_context(|| err_msg.clone())?;
+        // Assemble arguments for makechrootpkg
+        let mut args: Vec<&OsStr> = vec![
+            OsStr::new("-r"),
+            chroot_dir.as_ref().as_os_str(),
+            OsStr::new("-D"),
+            repo_dir.as_ref().as_os_str(),
+            OsStr::new("-u"),
+            OsStr::new("--"),
+            OsStr::new("-c"),
+            OsStr::new("--noconfirm"),
+            OsStr::new("--needed"),
+            OsStr::new("--syncdeps"),
+        ];
+        if ignore_arch {
+            args.extend([OsStr::new("--ignorearch")]);
+        }
+
+        let reader = cmd("makechrootpkg", &args)
+            .dir(self.dir())
+            .env("PKGDEST", pkg_dir.as_ref())
+            .stderr_to_stdout()
+            .stderr_capture()
+            .reader()
+            .with_context(|| err_msg.clone())?;
         for line in BufReader::new(reader).lines() {
             match line {
                 Ok(text) => println!("{}", text),
@@ -145,7 +152,7 @@ impl PkgBuild {
     }
 
     /// Build packages from PKGBUILD file with makepkg
-    pub fn build_with_makepkg<P>(&self, pkg_dir: P) -> anyhow::Result<()>
+    pub fn build_with_makepkg<P>(&self, ignore_arch: bool, pkg_dir: P) -> anyhow::Result<()>
     where
         P: AsRef<Path>,
     {
@@ -154,22 +161,27 @@ impl PkgBuild {
             self.as_ref().display()
         );
 
-        let reader = cmd!(
-            "env",
-            "-u",
-            "SHELLOPTS",
-            "makepkg",
-            "-c",
-            "--noconfirm",
-            "--needed",
-            "--syncdeps",
-        )
-        .dir(self.dir())
-        .env("PKGDEST", pkg_dir.as_ref())
-        .stderr_to_stdout()
-        .stderr_capture()
-        .reader()
-        .with_context(|| err_msg.clone())?;
+        // Assemble arguments for makepkg
+        let mut args: Vec<&OsStr> = vec![
+            OsStr::new("-u"),
+            OsStr::new("SHELLOPTS"),
+            OsStr::new("makepkg"),
+            OsStr::new("-c"),
+            OsStr::new("--noconfirm"),
+            OsStr::new("--needed"),
+            OsStr::new("--syncdeps"),
+        ];
+        if ignore_arch {
+            args.extend([OsStr::new("--ignorearch")]);
+        }
+
+        let reader = cmd("env", &args)
+            .dir(self.dir())
+            .env("PKGDEST", pkg_dir.as_ref())
+            .stderr_to_stdout()
+            .stderr_capture()
+            .reader()
+            .with_context(|| err_msg.clone())?;
         for line in BufReader::new(reader).lines() {
             match line {
                 Ok(text) => println!("{}", text),

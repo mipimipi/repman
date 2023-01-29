@@ -17,6 +17,7 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
             pkgbuild_dirs,
             clean_chroot,
             no_chroot,
+            ignore_arch,
             sign,
         } => {
             if *no_chroot && *clean_chroot {
@@ -30,6 +31,7 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
                 aur_pkg_names,
                 pkgbuild_dirs,
                 *no_chroot,
+                *ignore_arch,
                 *clean_chroot,
                 *sign,
             )
@@ -79,6 +81,7 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
             repo_name,
             clean_chroot,
             no_chroot,
+            ignore_arch,
             no_confirm,
             all,
             pkg_names,
@@ -100,6 +103,7 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
                 _ => api::update(
                     repo_name,
                     *no_chroot,
+                    *ignore_arch,
                     *clean_chroot,
                     *no_confirm,
                     if *all { None } else { Some(pkg_names) },

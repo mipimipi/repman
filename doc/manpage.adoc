@@ -47,6 +47,8 @@ Build and add packages to a repository. If the *--sign* option is set, the packa
 
 If *--nochroot* is set, the build does not take place in a chroot container. Building in a chroot container is the default.
 
+If *--ignorearch* is set, the architectures specified in the `arch` array of PKGBUILD are ignored.
+
 Example (build and add `pkg1` and `pkg2` from _AUR_ and some other packages from PKGBUILD files located in (local) directories `mydir1` and `mydir2` to `myrepo` ):
 
   $ repman add --repo myrepo --directory mydir1 --aur pkg1 --aur pkg2 --directory mydir2
@@ -131,6 +133,8 @@ Update outdated _AUR_ packages of a repository. To update all packages of a repo
 
 If *--nochroot* is set, the build does not take place in a chroot container. Building in a chroot container is the default.
 
+If *--ignorearch* is set, the architectures specified in the `arch` array of PKGBUILD are ignored.
+
 Before updates from _AUR_ are applied, the user is asked for confirmation. This behavior can be switched off with *--noconfirm*.
 
 Updated packages are signed automatically if the package was signed before the update and if the environment variable _GPGKEY_ is set.
@@ -168,6 +172,10 @@ Remove the chroot container after executing a command. This flag is available fo
 === --directory <DIRECTORY>, -d <DIRECTORY>
 
 Directory where a PKGBUILD file is stored. The corresponding packages will be built and added to a repository.
+
+=== --ignorearch, -A
+
+If the flag is set, the architectures specified in the `arch` array of the PKGBUILD file are ignored.
 
 === --nochroot, -n
 

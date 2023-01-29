@@ -49,6 +49,12 @@ pub enum Commands {
         )]
         no_chroot: bool,
         #[arg(
+            short = 'A',
+            long = "ignorearch",
+            help = "Ignore field arch in PKGBUILD"
+        )]
+        ignore_arch: bool,
+        #[arg(
             short = 'c',
             long = "clean",
             help = "Remove chroot environment after build"
@@ -180,6 +186,12 @@ pub enum Commands {
             help = "Don't build packages in chroot environment"
         )]
         no_chroot: bool,
+        #[arg(
+            short = 'A',
+            long = "ignorearch",
+            help = "Ignore field arch in PKGBUILD"
+        )]
+        ignore_arch: bool,
         #[arg(
             short = 'c',
             long = "clean",

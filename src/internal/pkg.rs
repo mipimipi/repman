@@ -71,6 +71,7 @@ impl Pkg {
     pub fn build<P, S>(
         pkgbuild: &PkgBuild,
         no_chroot: bool,
+        ignore_arch: bool,
         sign: Option<bool>,
         gpg_key: Option<S>,
         repo_dir: P,
@@ -104,11 +105,11 @@ impl Pkg {
         // files are stored in `pkg_dir`
         if no_chroot {
             pkgbuild
-                .build_with_makepkg(pkg_dir)
+                .build_with_makepkg(ignore_arch, pkg_dir)
                 .with_context(|| err_msg.clone())?
         } else {
             pkgbuild
-                .build_with_makechrootpkg(repo_dir, chroot_dir, pkg_dir)
+                .build_with_makechrootpkg(ignore_arch, repo_dir, chroot_dir, pkg_dir)
                 .with_context(|| err_msg.clone())?
         };
 

@@ -204,6 +204,7 @@ pub fn add<S>(
     aur_pkg_names: &[S],
     pkgbuild_dirs: &[PathBuf],
     no_chroot: bool,
+    ignore_arch: bool,
     clean_chroot: bool,
     sign: bool,
 ) -> anyhow::Result<()>
@@ -255,6 +256,7 @@ where
                     match Pkg::build(
                         &pkgbuild,
                         no_chroot,
+                        ignore_arch,
                         Some(sign),
                         gpg_key(),
                         local_dir(),
@@ -1407,6 +1409,7 @@ fn unlock() -> anyhow::Result<()> {
 pub fn update<S>(
     pkg_names: Option<&[S]>,
     no_chroot: bool,
+    ignore_arch: bool,
     clean_chroot: bool,
     no_confirm: bool,
 ) -> anyhow::Result<()>
@@ -1477,6 +1480,7 @@ where
                     match Pkg::build(
                         &pkgbuild,
                         no_chroot,
+                        ignore_arch,
                         None,
                         gpg_key(),
                         local_dir(),

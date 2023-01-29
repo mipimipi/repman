@@ -9,6 +9,7 @@ pub fn add<S, T>(
     aur_pkg_names: &[T],
     pkgbuild_dirs: &[PathBuf],
     no_chroot: bool,
+    ignore_arch: bool,
     clean_chroot: bool,
     sign: bool,
 ) -> anyhow::Result<()>
@@ -17,7 +18,14 @@ where
     T: AsRef<str> + Display + Eq + Hash,
 {
     repo::try_init(repo_name)?;
-    repo::add(aur_pkg_names, pkgbuild_dirs, no_chroot, clean_chroot, sign)
+    repo::add(
+        aur_pkg_names,
+        pkgbuild_dirs,
+        no_chroot,
+        ignore_arch,
+        clean_chroot,
+        sign,
+    )
 }
 
 /// Clean up a repository
@@ -143,6 +151,7 @@ where
 pub fn update<S, T>(
     repo_name: S,
     no_chroot: bool,
+    ignore_arch: bool,
     clean_chroot: bool,
     no_confirm: bool,
     pkg_names: Option<&[T]>,
@@ -152,5 +161,5 @@ where
     T: AsRef<str> + Display + Eq + Hash,
 {
     repo::try_init(repo_name)?;
-    repo::update(pkg_names, no_chroot, clean_chroot, no_confirm)
+    repo::update(pkg_names, no_chroot, ignore_arch, clean_chroot, no_confirm)
 }
