@@ -4,10 +4,8 @@ Upstream-Contact: Michael Picht <mipi@fsfe.org>
 Source: gitlab.com/mipimipi/repman
 
 Files: .gitignore
-       .gitlab-ci.yml
        *.toml
        Makefile
-       PKGBUILD
        README.adoc
        CHANGELOG.md
        repman-all
