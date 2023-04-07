@@ -51,7 +51,6 @@ release:
 		exit 1; \
 	fi; \
 	sed -i -e "s/^version.*/version = \"$${VER_NEW#v}\"/" ./Cargo.toml; \
-	sed -i -e "s/pkgver=.*/pkgver=$${VER_NEW#v}/" ./PKGBUILD; \
 	sed -i -e "/Michael Picht/{n;s/^.*/Version $${REL#v}/}" ./doc/manpage.adoc
 	@git commit -a -s -m "release $(RELEASE)"
 	@git push
