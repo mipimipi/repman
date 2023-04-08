@@ -242,12 +242,7 @@ pub struct PkgUpd<'a> {
 ///   other version)
 /// - package base
 /// Package base is required to be able to clone the package repository lateron
-pub fn pkg_updates<'a, S>(
-    db_pkgs: &'static repodb_parser::PkgMap,
-) -> anyhow::Result<Vec<PkgUpd<'a>>>
-where
-    S: AsRef<str> + Display + Eq + Hash,
-{
+pub fn pkg_updates<'a>(db_pkgs: &'static repodb_parser::PkgMap) -> anyhow::Result<Vec<PkgUpd<'a>>> {
     let mut pkg_upds: Vec<PkgUpd> = vec![];
 
     let pkg_infos = pkg_infos();

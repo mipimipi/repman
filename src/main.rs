@@ -1,7 +1,8 @@
-use crate::internal::api;
-use anyhow::anyhow;
+use crate::internal::{cfg, repo::Repo};
+use anyhow::{anyhow, Context};
 use arch_msgs::*;
 use clap::Parser;
+use dialoguer::Confirm;
 
 mod cli;
 mod internal;
@@ -26,8 +27,7 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
                 ));
             }
 
-            api::add(
-                repo_name,
+            Repo::new(repo_name)?.add(
                 aur_pkg_names,
                 pkgbuild_dirs,
                 *no_chroot,
@@ -38,7 +38,9 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
         }
 
         // Cleanup a repository
-        cli::Commands::CleanUp { repo_name } => api::clean_up(repo_name),
+        cli::Commands::CleanUp { repo_name } => Repo::new(repo_name)
+            .with_context(|| format!("Cannot clear data of repository {}", repo_name))?
+            .clean_up(),
 
         // Delete local data of a repository - i.e., chroot directory and/or
         // local repository directory in case of a remote repository
@@ -46,23 +48,87 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
             repo_name,
             clear_cache,
             clear_chroot,
-        } => api::clear(repo_name, *clear_cache, *clear_chroot),
+        } => {
+            let repo = Repo::new(repo_name)
+                .with_context(|| format!("Cannot clear data of repository {}", repo_name))?;
+            if *clear_cache {
+                if !repo.is_remote() {
+                    warning!(
+                "Repository {} is local. Thus, removing its cache directory does not makes sense",
+                repo_name
+            );
+                } else {
+                    repo.remove_cache_dir().with_context(|| {
+                        format!("Cannot remove cache directory of repository {}", repo_name)
+                    })?;
+                    msg!("Cache directory of repository {} removed", repo_name);
+                }
+            }
+            if *clear_chroot {
+                repo.remove_chroot_dir().with_context(|| {
+                    format!("Cannot remove chroot directory of repository {}", repo_name)
+                })?;
+                msg!("Chroot directory of repository {} removed", repo_name);
+            }
+            Ok(())
+        }
 
         // List packages of one repository
-        cli::Commands::Ls { repo_name } => api::ls(repo_name),
+        cli::Commands::Ls { repo_name } => {
+            let err_msg = format!("Cannot list content of repository {}", repo_name);
+            Repo::new(repo_name)
+                .with_context(|| err_msg.clone())?
+                .list()
+                .with_context(|| err_msg)
+        }
 
         // List all configured repositories
-        cli::Commands::LsRepos => api::ls_repos(),
+        cli::Commands::LsRepos => {
+            for repo_name in cfg::repos()?.keys() {
+                println!("{}", repo_name)
+            }
+            Ok(())
+        }
 
         // Create chroot container for a repository
-        cli::Commands::MkChroot { repo_name } => api::mkchroot(repo_name),
+        cli::Commands::MkChroot { repo_name } => {
+            let err_msg = format!("Cannot make chroot container for repository {}", repo_name);
+            let repo = Repo::new(repo_name).with_context(|| err_msg.clone())?;
+            if repo.chroot_exists() {
+                if Confirm::new()
+                    .with_prompt(format!(
+                        "A chroot for repository {} exists already. It is now being deleted. OK?",
+                        repo_name
+                    ))
+                    .default(true)
+                    .interact()
+                    .with_context(|| err_msg.clone())?
+                {
+                    repo.remove_chroot_dir().with_context(|| err_msg.clone())?
+                } else {
+                    return Ok(());
+                }
+            }
+            repo.make_chroot().with_context(|| err_msg)?;
+            Ok(())
+        }
 
         // Remove packages of a repository
         cli::Commands::Rm {
             repo_name,
             no_confirm,
             pkg_names,
-        } => api::rm(repo_name, *no_confirm, pkg_names),
+        } => {
+            if pkg_names.is_empty() {
+                Ok(())
+            } else {
+                let err_msg = format!("Cannot remove packages from repository {}", &repo_name);
+                Repo::new(repo_name)
+                    .with_context(|| err_msg.clone())?
+                    .remove(pkg_names, *no_confirm)
+                    .with_context(|| err_msg)
+            }
+        }
 
         // Sign packages of a repository
         cli::Commands::Sign {
@@ -74,8 +140,15 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
                 "Either submit package names or set option '--all', but not both."
             )),
             false if pkg_names.is_empty() => Ok(()),
-            _ => api::sign(repo_name, if *all { None } else { Some(pkg_names) }),
+            _ => {
+                let err_msg = format!("Cannot sign packages of repository {}", repo_name);
+                Repo::new(repo_name)
+                    .with_context(|| err_msg.clone())?
+                    .sign(if *all { None } else { Some(pkg_names) })
+                    .with_context(|| err_msg)
+            }
         },
+
         // Update packages
         cli::Commands::Update {
             repo_name,
@@ -100,13 +173,12 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
                     warning!("Either submit package names or set option '--all'");
                     Ok(())
                 }
-                _ => api::update(
-                    repo_name,
+                _ => Repo::new(repo_name)?.update(
+                    if *all { None } else { Some(pkg_names) },
                     *no_chroot,
                     *ignore_arch,
                     *clean_chroot,
                     *no_confirm,
-                    if *all { None } else { Some(pkg_names) },
                 ),
             }
         }
