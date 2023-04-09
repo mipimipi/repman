@@ -1,5 +1,11 @@
 # Changelog
 
+## [Release 0.4.0](https://gitlab.com/mipimipi/repman/tags/v0.4.0) (2023-04-09)
+
+### Added
+
+- Support for AWS S3: repman can be used to manage custom repositories that are hosted on AWS S3
+
 ## [Release 0.3.0](https://gitlab.com/mipimipi/repman/tags/v0.3.0) (2023-01-29)
 
 ### Added
