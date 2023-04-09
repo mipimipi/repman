@@ -27,6 +27,7 @@ pub trait Server {
 const SCHEME_FILE: &str = "file";
 const SCHEME_RSYNC: &str = "rsync";
 const SCHEME_S3: &str = "s3";
+const SCHEME_GCS: &str = "gs";
 
 /// Takes an URL and creates - based on its scheme - an instance of a
 /// corresponding type that implements the Server trait
@@ -35,6 +36,7 @@ pub fn new(url: &Url) -> anyhow::Result<Box<dyn Server>> {
         SCHEME_FILE => Box::new(File::new()),
         SCHEME_RSYNC => Box::new(Rsync::new(url.clone())),
         SCHEME_S3 => Box::new(S3::new(url.clone())),
+        SCHEME_GCS => Box::new(Gcs::new(url.clone())),
         _ => {
             return Err(anyhow!("Server URL '{}' has unsupported scheme", &url));
         }
@@ -43,7 +45,9 @@ pub fn new(url: &Url) -> anyhow::Result<Box<dyn Server>> {
     Ok(server)
 }
 
-/// Generic code for downloading a repository from a remote location
+/// Generic code for downloading a repository from a remote location. $cmd must
+/// be of duct::Expression. It can be create with the macro duct::cmd!() or the
+/// function duct::cmd(), for example
 macro_rules! download_repo {
     ($remote_dir:expr, $cmd:expr) => {
         msg!(
@@ -68,7 +72,9 @@ macro_rules! download_repo {
     };
 }
 
-/// Generic code for uploading a repository to a remote location
+/// Generic code for uploading a repository to a remote location. $cmd must be of
+/// duct::Expression. It can be create with the macro duct::cmd!() or the
+/// function duct::cmd(), for example
 macro_rules! upload_repo {
     ($remote_dir:expr, $cmd:expr) => {
         msg!(
@@ -185,6 +191,53 @@ impl Server for S3 {
                 "--acl-public",
                 ensure_ends_with_slash(local_dir.as_os_str()),
                 ensure_ends_with_slash(OsStr::new(&self.url.as_str())),
+            )
+        );
+    }
+}
+
+/// Implementation for Google Cloud Storage
+struct Gcs {
+    url: Url,
+}
+impl Gcs {
+    pub fn new(url: Url) -> Self {
+        Gcs { url }
+    }
+}
+impl Server for Gcs {
+    fn is_remote(&self) -> bool {
+        true
+    }
+
+    fn download_repo(&self, local_dir: &Path) -> anyhow::Result<()> {
+        download_repo!(
+            self.url,
+            cmd!(
+                "gsutil",
+                "-m",
+                "rsync",
+                "-r",
+                "-d",
+                "-u",
+                &self.url.as_str(),
+                local_dir,
+            )
+        );
+    }
+
+    fn upload_repo(&self, local_dir: &Path) -> anyhow::Result<()> {
+        upload_repo!(
+            self.url,
+            cmd!(
+                "gsutil",
+                "-m",
+                "rsync",
+                "-r",
+                "-d",
+                "-u",
+                local_dir,
+                &self.url.as_str(),
             )
         );
     }

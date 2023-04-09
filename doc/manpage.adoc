@@ -31,6 +31,7 @@ Different storage locations are supported for repositories:
 * The local file system
 * Servers which can be accessed via _SSH_ (requires the optional dependency _rsync_)
 * AWS S3 (requires the optional dependency _s3cmd_)
+* Google Cloud Storage (requires installation of Google Cloud CLI that contains the tools _gcloud_ and _gsutil_)
 
 == RETURN VALUE
 
@@ -40,7 +41,7 @@ The program returns 0 if it was executed successfully, values > 0 if an error oc
 
 *repman* must either be called with a command usually followed by a repository name and - depending on the command - further options and arguments, or with the help option (*--help* or *-h*). Irrelevant options are silently ignored, and may not be checked for correctness.
 
-To execute a *repman* command for all configured repositories, use *repman-all*. It must be called with the corresponding *repman* command (without "repman"  and a repository name) incl. arguments.
+To execute a *repman* command for all configured repositories, use `repman-all`. It must be called with the corresponding *repman* command (without "repman"  and a repository name) incl. arguments.
 
 Example (update all packages of all repositories):
 
@@ -48,29 +49,29 @@ Example (update all packages of all repositories):
 
 === add
 
-Build and add packages to a repository. If the *--sign* option is set, the package files are signed. The build scripts (i.e., PBGBUILD files) for the packages to be added can come from two different sources: The _Arch User Repository (AUR)_ or the local file system. For AUR packages, use the *--aur* option. *--directory* is used to specify the location of build scripts stored in the local files system. *--aur* and *--directory* can be used multiple times and can be combined in one call of *repman add*.
+Build and add packages to a repository. If the `--sign` option is set, the package files are signed. The build scripts (i.e., PBGBUILD files) for the packages to be added can come from two different sources: The _Arch User Repository (AUR)_ or the local file system. For AUR packages, use the `--aur` option. `--directory` is used to specify the location of build scripts stored in the local files system. `--aur` and `--directory` can be used multiple times and can be combined in one call of `repman add`.
 
-If *--nochroot* is set, the build does not take place in a chroot container. Building in a chroot container is the default.
+If `--nochroot` is set, the build does not take place in a chroot container. Building in a chroot container is the default.
 
-If *--ignorearch* is set, the architectures specified in the `arch` array of PKGBUILD are ignored.
+If `--ignorearch` is set, the architectures specified in the `arch` array of PKGBUILD are ignored.
 
 Example (build and add `pkg1` and `pkg2` from _AUR_ and some other packages from PKGBUILD files located in (local) directories `mydir1` and `mydir2` to `myrepo` ):
 
   $ repman add --repo myrepo --directory mydir1 --aur pkg1 --aur pkg2 --directory mydir2
 
-*repman add* creates a chroot container for the repository in the background if it does not yet exist. For details about the creation of a chroot container see the *mkchroot* command. If a chroot container must be adjusted manually before the first build, create one with *repman mkchroot* before using *repman add* - but adjustments to it can also be done automatically via script. If distributed builds are required, adjust the corresponding *makepkg.conf* file accordingly - see the *mkchroot* command and the *NOTES* section for details.
+`repman add` creates a chroot container for the repository in the background if it does not yet exist. For details about the creation of a chroot container see the *mkchroot* command. If a chroot container must be adjusted manually before the first build, create one with `repman mkchroot` before using `repman add` - but adjustments to it can also be done automatically via script. If distributed builds are required, adjust the corresponding *makepkg.conf* file accordingly - see the *mkchroot* command and the *NOTES* section for details.
 
 === cleanup
 
-Clean up the database of a repositories. Sometimes a repository is in an inconsistent state (see *TROUBLESHOOTING*). *repman cleanup* can be used to make it consistent again.
+Clean up the database of a repositories. Sometimes a repository is in an inconsistent state (see *TROUBLESHOOTING*). `repman cleanup` can be used to make it consistent again.
 
 === clear
 
-Delete local data of a repository. Called with *--chroot*, *repman clear* deletes the chroot container of a repository, called with *--cache* it deletes the local copy/cache of the repository if it is remote. Local repositories (i.e., repositories where the repository directory is located in the local file system) do not have such a copy/cache directory and thus, calling this command with *--cache* does not make sense and does not change the repository directory at all.
+Delete local data of a repository. Called with `--chroot`, `repman clear` deletes the chroot container of a repository, called with `--cache` it deletes the local copy/cache of the repository if it is remote. Local repositories (i.e., repositories where the repository directory is located in the local file system) do not have such a copy/cache directory and thus, calling this command with `--cache` does not make sense and does not change the repository directory at all.
 
 === help
 
-Display usage information. Execute *repman help* followed by the name of a command to get usage information about that command. If *repman help* is executed without any command, general usage information for *repman* is provided.
+Display usage information. Execute `repman help` followed by the name of a command to get usage information about that command. If `repman help` is executed without any command, general usage information for *repman* is provided.
 
 === ls
 
@@ -118,11 +119,11 @@ With this approach, one can create repository-specific scripts or a script that 
 
 If distributed builds are enabled in *makepkg.conf* (i.e., `distcc` is set in `BUILDENV`), the *distcc* package is installed in the chroot container as well. In addition, the *distcc* package must be installed on your system. This must be done manually.
 
-The described behavior wrt. selection of *makepkg.conf*, *pacman.conf* and the *adjustchroot* script also applies to the implicit creation of chroot containers during *repman add* and *repman update*. 
+The described behavior wrt. selection of *makepkg.conf*, *pacman.conf* and the *adjustchroot* script also applies to the implicit creation of chroot containers during `repman add` and `repman update`. 
 
 === rm
 
-Remove packages from a repository. The package names must be given as a space-separated list. In case a package is a dependency of another package in the repository, the user is asked for confirmation. This behavior can be switched off with *--noconfirm*.
+Remove packages from a repository. The package names must be given as a space-separated list. In case a package is a dependency of another package in the repository, the user is asked for confirmation. This behavior can be switched off with `--noconfirm`.
 
 Example (remove packages `pkg1` and `pkg2` from `myrepo`):
 
@@ -130,23 +131,23 @@ Example (remove packages `pkg1` and `pkg2` from `myrepo`):
 
 === sign
 
-Sign either all or only specific packages of a repository. To sign all packages of a repository, use the flag *--all*. Otherwise, packages to be signed must be specified explicitely. The key to be used must be stored in the environment variable GPGKEY or defined in the relevant `makepkg.conf` file.
+Sign either all or only specific packages of a repository. To sign all packages of a repository, use the flag `--all`. Otherwise, packages to be signed must be specified explicitely. The key to be used must be stored in the environment variable GPGKEY or defined in the relevant `makepkg.conf` file.
 
 === update
 
-Update outdated _AUR_ packages of a repository. To update all packages of a repository, use the flag *--all*. Otherwise packages to be updated must be specified explicitely.
+Update outdated _AUR_ packages of a repository. To update all packages of a repository, use the flag `--all`. Otherwise packages to be updated must be specified explicitely.
 
-If *--nochroot* is set, the build does not take place in a chroot container. Building in a chroot container is the default.
+If `--nochroot` is set, the build does not take place in a chroot container. Building in a chroot container is the default.
 
-If *--ignorearch* is set, the architectures specified in the `arch` array of PKGBUILD are ignored.
+If `--ignorearch` is set, the architectures specified in the `arch` array of PKGBUILD are ignored.
 
-Before updates from _AUR_ are applied, the user is asked for confirmation. This behavior can be switched off with *--noconfirm*.
+Before updates from _AUR_ are applied, the user is asked for confirmation. This behavior can be switched off with `--noconfirm`.
 
 Updated packages are signed automatically if the package was signed before the update and if the environment variable _GPGKEY_ is set.
 
-*repman update* creates a chroot container for the repository in the background if it does not yet exist. For details about the creation of a chroot container see the *mkchroot* command. If a chroot container must be adjusted before the first build, create one with *repman mkchroot* before using *repman update*. If distributed builds are required, adjust the corresponding *makepkg.conf* file accordingly - see the *mkchroot* command and the *NOTES* section for details.
+`repman update` creates a chroot container for the repository in the background if it does not yet exist. For details about the creation of a chroot container see the *mkchroot* command. If a chroot container must be adjusted before the first build, create one with `repman mkchroot` before using *repman update*. If distributed builds are required, adjust the corresponding *makepkg.conf* file accordingly - see the *mkchroot* command and the *NOTES* section for details.
 
-To update packages that do not come from the _AUR_ but whose PKGBUILD is located in the local file system, use *repman add*. Make sure, that the PKGBUILD specifies a higher version number than the version that is already contained in the repository. *repman add* makes sure that the artefacts belonging to an older package version are removed consistently.   
+To update packages that do not come from the _AUR_ but whose PKGBUILD is located in the local file system, use `repman add`. Make sure, that the PKGBUILD specifies a higher version number than the version that is already contained in the repository. `repman add` makes sure that the artefacts belonging to an older package version are removed consistently.   
 
 == OPTIONS
 
@@ -156,7 +157,7 @@ General usage information for *repman*.
 
 === --all
 
-Apply command to all packages. This flag is available for *repman sign* and *repman update*.
+Apply command to all packages. This flag is available for `repman sign` and `repman update`.
 
 === --aur <PACKAGE>, -a <PACKAGE>
 
@@ -172,7 +173,7 @@ Flag that refers to the chroot container for a repository.
 
 === --clean, -c
 
-Remove the chroot container after executing a command. This flag is available for *repman add* and *repman update*.
+Remove the chroot container after executing a command. This flag is available for `repman add` and `repman update`.
 
 === --directory <DIRECTORY>, -d <DIRECTORY>
 
@@ -198,23 +199,26 @@ Sign packages with _gpg_. The gpg key to be used must be stored in the environme
 
 Repositories which are to be managed with *repman* must be configured in the configuration file *repos.conf* (see below). The configuration is done in _TOML_ format. Some examples:
 
-    [repository1]
+    [myrepo1]
     Server = "rsync://myuser@my-ssh-server:/path/to/directory/"
-    DBName = "(Optional) DB name of the repository"
+    DBName = "mydb"
     SignDB = "true"
 
-    [repository2]
+    [myrepo2]
     Server = "s3://mybucket/another/path/to/directory/"
-    DBName = "(Optional) DB name of the repository"
     SignDB = "false"
 
-*Server* is the URL to the remote directory where the repository is located. The scheme (i.e., the part before "://") is used to determine the type of the remote server (currentyly, `file` for the local file system, `rsync` for _SSH_-accessible server and `s3` for AWS S3 are supported). Like in *pacman.conf*, *$arch*, *$repo* and *$db* can be used as placeholders for the current architecture (e.g. x86_64), the current repository name and the current DB name (if the DB name is set).
+    [myrepo3]
+    Server = "gs://myotherbucket/path/to/directory/"
+    SignDB = "false"
+
+*Server* is the URL to the remote directory where the repository is located. The scheme (i.e., the part before "://") is used to determine the type of the remote server (currentyly, `file` for the local file system, `rsync` for _SSH_-accessible server, `s3` for AWS S3, and `gs` for  Google Cloud Storage are supported). Like in *pacman.conf*, *$arch*, *$repo* and *$db* can be used as placeholders for the current architecture (e.g. x86_64), the current repository name and the current DB name (if the DB name is set).
 
 *SignDB* specifies whether the repository database is signed after it was changed (set to `true`) or not (set to `false`). To sign the database, the environment variable _GPGKEY_ or defined in the relevant `makepkg.conf` file.
 
 *DBName* is optional. It allows to set the name of the repository DB explicitly. If *DBName* is not set, the repository name REPOSITORY is used as DB name. With this approach it is possible to manage the repository by *repman* under a different name than it is configured later on in `/etc/pacman.conf`. In `pacman.conf` the name of the repositoty DB must be used. This can be required for some edge cases, but usually *DBName* does not have to be set.
 
-Note: Depending on the type of the remote storage location, additional packages might have to be installed (_rsync_ for SSH-accessible servers, _s3cmd_ for AWS S3) and the corresponding configuration is required.
+Note: Depending on the type of the remote storage location, additional packages might have to be installed (_rsync_ for SSH-accessible servers, _s3cmd_ for AWS S3, _gcloud_ for Google Cloud Storage), and the corresponding configuration is required.
 
 == ENVIRONMENT
 
@@ -298,7 +302,7 @@ If a container already exists, execute the following steps:
     $ cd ~/.cache/repman/chroots/<REPOSITORY>    
     $ sudo rm -rd <YOUR USER NAME> <YOUR USER NAME>.lock
 
-=== Configuring AWS S3
+=== AWS S3
 
 Some hints to configure the AWS S3 storage prior to use it with *repman*:
 
@@ -310,27 +314,40 @@ Some hints to configure the AWS S3 storage prior to use it with *repman*:
 6. Install s3cmd and configure it (`s3cmd --configure`). Enter the access key and the secret key of the user you have just created.
 7. Configure the new repository in the *repman* configuration file.
 
+=== Google Cloud Storage
+
+Some hints to configure the Google Cloud Storage prior to use it with *repman*:
+
+1. Create a Google account
+2. Create a project and a bucket with a folder structure of your desire to host the repository.
+3. Make sure that the folders that contain the repository data are publicly readable.
+4. Configure the write access
+4. Install Google Cloud CLI on your local machine and initialize it (`gcloud init`)
+5. Configure the new repository in the *repman* configuration file.
+
+Note: *repman* uses the _gsutil_ (part of _gcloud_) to transfer data between the local file system and Google Cloud Storage. Make sure to switch to the correct configuration with _gcloud_ before running *repman*.
+
 == TROUBLESHOOTING AND FAQ
 
 === Adding packages to a remote repository leads to an rsync error
 
 This error can happen, if the remote location is an _SSH_-accessible server and in the PKGBUILD file of the package the _epoch_ is set. In this case, the name of the package contains a colon. If the system that hosts the remote repository does not allow colons in file names, _rsync_ throws an error.
   
-Unfortunately, there's no other solution than either changing the remote system / hoster or to not add such a packages to the repository. Since inconsistencies can occur (after such an error occurred, the repository database can, for example, contain a package but the corresponding package tarball is not stored), *repman cleanup* helps to make the repository consistent again.
+Unfortunately, there's no other solution than either changing the remote system / hoster or to not add such a packages to the repository. Since inconsistencies can occur (after such an error occurred, the repository database can, for example, contain a package but the corresponding package tarball is not stored), `repman cleanup` helps to make the repository consistent again.
 
 === The build process stops because a dependency is missing
 
 Normally, this happens because a dependency is not maintained in the PKGBUILD script of the package. Often, for example, package maintainers do not list _git_ as make dependency, but since *repman* does the build in a chroot container, _git_ is not installed there by default. 
 
-If you are the owner of the package you want to build/add, adjust the corresponding PKGBUILD file and run *repman add* again.
+If you are the owner of the package you want to build/add, adjust the corresponding PKGBUILD file and run `repman add` again.
     
 Otherwise, if the dependency is in the official Arch Linux repositories, add it to the chroot container that is used for your repository by executing as root:
 
     $ pacstrap ~/.cache/repman/chroots/<REPOSITORY> <DEPENDENCY>
 
-Run *repman add* again.
+Run `repman add` again.
 
-Otherwise, if the dependency is an _AUR_ package, add it to your repo via *repman add*. Now, try to add the package again via *repman add*.
+Otherwise, if the dependency is an _AUR_ package, add it to your repo via *repman add*. Now, try to add the package again via `repman add`.
 
 === During the build process, the error "error: PACKAGE: signature from NAME, MAIL ADDRESS is invalid" occurs
 
@@ -342,11 +359,11 @@ If the maintainer of the package did not put the key into the _validpgpkeys_ arr
 
     $ gpg --lsign-key <KEY-ID>
 
-Run *repman add* again.
+Run `repman add` again.
 
 === A package of a remote repository requires dependencies from another custom repository
 
-Add the custom repository to the _pacman.conf_ file that _repman_ uses for the remote repository:
+Add the custom repository to the _pacman.conf_ file that *repman* uses for the remote repository:
 
     ~/.config/repman/pacman-<REPOSITORY>.conf
 
