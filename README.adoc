@@ -22,6 +22,12 @@ repman supports the following tasks:
 * Removing packages
 * Updating packages
 
+Different storage locations are support for repositories:
+
+* Local file system
+* Remote servers with SSH access (requires optional dependency https://wiki.archlinux.org/title/Rsync[rsync])
+* https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html[AWS S3] (requires optional dependency https://archlinux.org/packages/community/any/s3cmd/[s3cmd])
+
 A very important goal of repman is to keep the local system, i.e., the system that is used to manage custom repositories, as clean as possible. Therefore, packages are built in https://wiki.archlinux.org/index.php/Chroot[chroot] containers via https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_clean_chroot[makechrootpkg] per default.
 
 == Installation

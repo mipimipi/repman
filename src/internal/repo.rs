@@ -6,7 +6,7 @@ use crate::internal::{
     deps::Deps,
     pkg::Pkg,
     pkgbuild::PkgBuild,
-    server::{file, rsync, Server},
+    server::{self, Server},
 };
 use anyhow::{anyhow, Context};
 use arch_msgs::*;
@@ -31,10 +31,6 @@ use std::{
     str::from_utf8,
 };
 use url::Url;
-
-/// Constants for URL schemes (repman only supports rsync and file)
-const SCHEME_FILE: &str = "file";
-const SCHEME_RSYNC: &str = "rsync";
 
 /// File suffixes
 const DB_SUFFIX: &str = ".db";
@@ -109,20 +105,10 @@ impl Repo {
                     format!("Server URL of repository {} could not be parsed", name)
                 })?;
 
-                let server: Box<dyn Server> = match url.scheme() {
-                    SCHEME_FILE => Box::new(file::Server::new()),
-                    SCHEME_RSYNC => Box::new(rsync::Server::new(url.clone())),
-                    _ => {
-                        return Err(anyhow!(
-                            "Server URL of repository {} has unsupported scheme '{}'",
-                            name,
-                            url.scheme()
-                        ));
-                    }
-                };
+                let server = server::new(&url)?;
 
                 let local_dir = if !server.is_remote() {
-                    PathBuf::from(url.path())
+                    PathBuf::from(&url.path())
                 } else {
                     cache_dir()
                         .with_context(|| {
@@ -262,7 +248,7 @@ impl Repo {
             return Ok(());
         }
 
-        let err_msg = format!("Cannot add packages to DB of repository {}", self.name);
+        let err_msg = format!("Cannot add packages to DB of repository {}", &self.name);
 
         // In case the repository is signed but will not be signed after adding
         // packages, the signature file are removed. This is required since
@@ -454,7 +440,7 @@ impl Repo {
             .with_context(|| {
                 format!(
                     "Cannot check if repository {} contains package {}",
-                    self.name, pkg_name
+                    &self.name, pkg_name
                 )
             })?
             .contains_key(pkg_name.as_ref()))
@@ -464,7 +450,7 @@ impl Repo {
     /// initialized with the packages base-devel and (provided distributed build is
     /// configured in the relevant makepkg.conf) distcc.
     fn create_chroot(&self) -> anyhow::Result<()> {
-        let err_msg = format!("Cannot create chroot for repository {}", self.name);
+        let err_msg = format!("Cannot create chroot for repository {}", &self.name);
 
         // Create chroot directory if it does not exist
         ensure_dir(&self.chroot_dir).with_context(|| err_msg.clone())?;
@@ -487,7 +473,7 @@ impl Repo {
         #[allow(clippy::unnecessary_unwrap)]
         let distcc = captures.is_some() && captures.as_ref().unwrap().get(0).is_some();
 
-        msg!("Creating chroot for repository {} ...", self.name);
+        msg!("Creating chroot for repository {} ...", &self.name);
 
         // Assemble arguments for mkarchroot
         let chroot_dir = &self.chroot_dir.join(CHROOT_ROOT_SUB_PATH);
@@ -542,12 +528,12 @@ impl Repo {
         static DB_PKGS: OnceCell<repodb_parser::PkgMap> = OnceCell::new();
         DB_PKGS.get_or_try_init(|| {
             if !self.db_exists() {
-                return Err(anyhow!("DB of repository {} does not exist", self.name));
+                return Err(anyhow!("DB of repository {} does not exist", &self.name));
             }
 
             repodb_parser::parse(
                 self.local_dir
-                    .join(self.db_name.clone() + DB_SUFFIX)
+                    .join(self.db_name.clone() + DB_ARCHIVE_SUFFIX)
                     .as_path(),
             )
         })
@@ -558,7 +544,7 @@ impl Repo {
         Deps::new(self.db_pkgs().with_context(|| {
             format!(
                 "Cannot retrieve dependencies from DB for repository {}",
-                self.name
+                &self.name
             )
         })?)
     }
@@ -575,7 +561,7 @@ impl Repo {
     fn ensure_db(&self) -> anyhow::Result<()> {
         let err_msg = format!(
             "Cannot ensure that repository DB exists for repository {}",
-            self.name
+            &self.name
         );
 
         if self.db_exists() {
@@ -588,7 +574,8 @@ impl Repo {
             "repo-add",
             "-n",
             "-R",
-            self.local_dir
+            &self
+                .local_dir
                 .join(self.db_name.clone() + DB_ARCHIVE_SUFFIX)
         )
         .stdout_null()
@@ -609,7 +596,7 @@ impl Repo {
     fn ensure_pkg_tmp_dirs(&self) -> anyhow::Result<(PathBuf, PathBuf)> {
         let err_msg = format!(
             "Cannot ensure temporary directories for repository {}",
-            self.name
+            &self.name
         );
 
         let tmp_dir = ensure_tmp_dir().with_context(|| err_msg.clone())?;
@@ -647,7 +634,7 @@ impl Repo {
             let output = cmd!(
                 adjust_chroot,
                 &self.name,
-                self.chroot_dir.join(CHROOT_ROOT_SUB_PATH)
+                &self.chroot_dir.join(CHROOT_ROOT_SUB_PATH)
             )
             .stderr_capture()
             .unchecked()
@@ -734,9 +721,9 @@ impl Repo {
             if self.db_exists() {
                 // Retrieve dependencies and packages
                 let deps = self.deps()?;
-                let db_pkgs = self
-                    .db_pkgs()
-                    .with_context(|| format!("Cannot list packages of repository {}", self.name))?;
+                let db_pkgs = self.db_pkgs().with_context(|| {
+                    format!("Cannot list packages of repository {}", &self.name)
+                })?;
 
                 // Determine max length of all package name and all architecture
                 // strings
@@ -750,7 +737,7 @@ impl Repo {
                 println!(
                     "{}  [{}]",
                     if self.is_db_signed() { "s" } else { "-" },
-                    self.name
+                    &self.name
                 );
 
                 for db_pkg in db_pkgs.values() {
@@ -781,7 +768,7 @@ impl Repo {
 
     /// Creates a lock (i.e., a file with the current process ID)
     fn lock(&self) -> anyhow::Result<()> {
-        let err_msg = format!("Cannot create lock for repository {}", self.name);
+        let err_msg = format!("Cannot create lock for repository {}", &self.name);
         let lock_file = self.lock_file()?;
 
         if lock_file.exists() {
@@ -790,7 +777,7 @@ impl Repo {
                 Err(anyhow!(
                     "Lock file '{}' exists: repository {} is locked by process {}",
                     lock_file.display(),
-                    self.name,
+                    &self.name,
                     pid
                 ))
             } else {
@@ -806,7 +793,7 @@ impl Repo {
 
     /// Returns the path to lock file of the repository
     fn lock_file(&self) -> anyhow::Result<PathBuf> {
-        let err_msg = format!("Cannot determine lock file for repository {}", self.name);
+        let err_msg = format!("Cannot determine lock file for repository {}", &self.name);
         Ok(ensure_dir(locks_dir().with_context(|| err_msg.clone())?)
             .with_context(|| err_msg)?
             .join(&self.name))
@@ -815,7 +802,7 @@ impl Repo {
     /// Creates a chroot container. First, a lock is created for the current
     /// repository
     pub fn make_chroot(&self) -> anyhow::Result<()> {
-        let err_msg = format!("Cannot make chroot for repository {}", self.name);
+        let err_msg = format!("Cannot make chroot for repository {}", &self.name);
 
         // Since the repository will be changed it must be locked
         lock!(self);
@@ -842,7 +829,7 @@ impl Repo {
                 // packages
                 let err_msg = format!(
                     "Cannot determine path to makepkg.conf for repository {}",
-                    self.name
+                    &self.name
                 );
                 let config_dir = config_dir().with_context(|| err_msg.clone())?;
                 let paths: [PathBuf; 3] = [
@@ -857,7 +844,7 @@ impl Repo {
                 }
                 Err(anyhow!(
                     "None of the possible makepkg.conf files exists for repository {}",
-                    self.name
+                    &self.name
                 ))
             })?
             .as_path())
@@ -879,7 +866,7 @@ impl Repo {
                 let config_dir = config_dir().with_context(|| {
                     format!(
                         "Cannot determine path to pacman.conf for repository {}",
-                        self.name
+                        &self.name
                     )
                 })?;
                 let paths: [PathBuf; 3] = [
@@ -894,7 +881,7 @@ impl Repo {
                 }
                 Err(anyhow!(
                     "None of the possible pacman.conf files exists for repository {}",
-                    self.name
+                    &self.name
                 ))
             })?
             .as_path())
@@ -956,7 +943,7 @@ impl Repo {
                 format!(
                     "\n[{}]\nSigLevel = Optional TrustAll\nServer = file://{}\n",
                     &self.db_name,
-                    self.local_dir.display()
+                    &self.local_dir.display()
                 )
                 .as_bytes(),
             )
@@ -975,7 +962,7 @@ impl Repo {
     where
         S: AsRef<str> + Display,
     {
-        let db_path = self.local_dir.join(self.db_name.clone() + DB_SUFFIX);
+        let db_path = &self.local_dir.join(self.db_name.clone() + DB_SUFFIX);
         let db_pkg = self
             .db_pkgs()
             .with_context(|| {
@@ -989,7 +976,7 @@ impl Repo {
                 anyhow!(
                     "Package {} is not contained in repository {}",
                     pkg_name,
-                    self.name
+                    &self.name
                 )
             })?;
 
@@ -1045,8 +1032,8 @@ impl Repo {
             // Update chroot
             let reader = cmd!(
                 "arch-nspawn",
-                self.chroot_dir.join(CHROOT_ROOT_SUB_PATH),
-                format!("--bind-ro={}", self.local_dir.display()),
+                &self.chroot_dir.join(CHROOT_ROOT_SUB_PATH),
+                format!("--bind-ro={}", &self.local_dir.display()),
                 "pacman",
                 "-Syu",
                 "--noconfirm",
@@ -1080,7 +1067,7 @@ impl Repo {
                 // Determine the names of the to-be-removed packages
                 let deps = self.deps()?;
                 let valid_pkg_names = self.valid_pkg_names(Some(pkg_names)).with_context(|| {
-                    format!("Cannot remove packages from repository {}", self.name)
+                    format!("Cannot remove packages from repository {}", &self.name)
                 })?;
                 let to_be_removed_pkg_names: Vec<&str> = valid_pkg_names
                     .into_iter()
@@ -1103,7 +1090,7 @@ impl Repo {
                 // Remove packages from repository DB and remove package files
                 self.remove_pkgs::<&str>(&to_be_removed_pkg_names)
                     .with_context(|| {
-                        format!("Cannot remove packages from repository {}", self.name)
+                        format!("Cannot remove packages from repository {}", &self.name)
                     })?;
             }
         });
@@ -1117,17 +1104,20 @@ impl Repo {
         if !self.server.is_remote() {
             warning!(
                 "Since '{}' is a local repository, there is no cache directory to be removed",
-                self.name
+                &self.name
             );
             return Ok(());
         }
 
-        let err_msg = format!("Cannot remove cache directory for repository {}", self.name);
+        let err_msg = format!(
+            "Cannot remove cache directory for repository {}",
+            &self.name
+        );
 
         if !self.local_dir.exists() {
             msg!(
                 "Cache directory for repository {} does not exist. Nothing to remove",
-                self.name
+                &self.name
             );
             return Ok(());
         }
@@ -1150,7 +1140,7 @@ impl Repo {
 
         let err_msg = format!(
             "Cannot remove chroot directory for repository {}",
-            self.name
+            &self.name
         );
 
         lock!(self);
@@ -1192,7 +1182,7 @@ impl Repo {
             for path in (glob(
                 format!(
                     "{}/{}.{}*.sig",
-                    self.local_dir.display(),
+                    &self.local_dir.display(),
                     &self.name,
                     pattern
                 )
@@ -1229,7 +1219,7 @@ impl Repo {
                         // contained in the repository DB
                         panic!(
                             "Cannot retrieve package {} from repository {}",
-                            pkg_name, self.name
+                            pkg_name, &self.name
                         )
                     })
                     .remove_from_dir(&self.local_dir)
@@ -1240,7 +1230,7 @@ impl Repo {
                             "{:?}",
                             anyhow!(err.context(format!(
                                 "Cannot remove package {} from repository {}",
-                                pkg_name, self.name
+                                pkg_name, &self.name
                             )))
                         );
                         false
@@ -1323,7 +1313,7 @@ impl Repo {
     {
         lock!(self);
         exec_on_repo!(self, {
-            let err_msg = format!("Cannot sign packages of repository {}", self.name);
+            let err_msg = format!("Cannot sign packages of repository {}", &self.name);
             // Signing packages makes only sense if there is a repository DB
             if self.db_exists() {
                 // Sign the relevant packages
@@ -1360,7 +1350,7 @@ impl Repo {
                 return Err(anyhow!(
                     "Lock file '{}' exists: repository {} is locked by process {}",
                     lock_file.display(),
-                    self.name,
+                    &self.name,
                     pid
                 )
                 .context(err_msg));
@@ -1510,7 +1500,7 @@ impl Repo {
                     }
                     error!(
                         "Package {} is not contained in repository {}",
-                        pkg_name, self.name
+                        pkg_name, &self.name
                     );
                 }
             }

@@ -25,7 +25,12 @@ repman - REPository MANager for Arch Linux packages
 
 Management of custom package repositories.
 
-With *repman*, packages can be built and added to repositories, being removed from them or being updated. *repman* is suited for managing local and remote repositories. Under the hood, it uses tools like _makechrootpkg_, _makepkg_, _repo-add_ and _repo-remove_. To not affect the host system (i.e., the system that is used to run *repman*), packages are built in _chroot_ containers using _makechrootpkg_. Each repository has its own chroot container with a repository-specific _pacman.conf_ file. The data transfer between the local file system and remote repositories is done via _rsync_.
+With *repman*, packages can be built and added to repositories, being removed from them or being updated. *repman* is suited for managing local and remote repositories. Under the hood, it uses tools such as _makechrootpkg_, _makepkg_, _repo-add_ and _repo-remove_. To not affect the host system (i.e., the system that is used to run *repman*), packages are built in _chroot_ containers using _makechrootpkg_. Each repository has its own chroot container with a repository-specific _pacman.conf_ file. 
+
+Different storage locations are supported for repositories:
+* The local file system
+* Servers which can be accessed via _SSH_ (requires the optional dependency _rsync_)
+* AWS S3 (requires the optional dependency _s3cmd_)
 
 == RETURN VALUE
 
@@ -191,18 +196,25 @@ Sign packages with _gpg_. The gpg key to be used must be stored in the environme
 
 == CONFIGURATION
 
-Repositories which are to be managed with *repman* must be configured in the configuration file *repos.conf* (see below). The configuration is done in _TOML_ format:
+Repositories which are to be managed with *repman* must be configured in the configuration file *repos.conf* (see below). The configuration is done in _TOML_ format. Some examples:
 
-    [REPOSITORY]
-    Server = "rsync://USER@SERVER:/PATH/TO/DIRECTORY/$arch"
-    DBName = "DB name of the repository"
-    SignDB = true
+    [repository1]
+    Server = "rsync://myuser@my-ssh-server:/path/to/directory/"
+    DBName = "(Optional) DB name of the repository"
+    SignDB = "true"
 
-*Server* is the URL to the remote directory where the repository is located. Two schemes are supported: _file_ for local and _rsync_ for remote repositories. Like in *pacman.conf*, *$arch*, *$repo* and *$db* can be used as placeholders for the current architecture (e.g. x86_64), the current repository name and the current DB name (if the DB name is set).
+    [repository2]
+    Server = "s3://mybucket/another/path/to/directory/"
+    DBName = "(Optional) DB name of the repository"
+    SignDB = "false"
+
+*Server* is the URL to the remote directory where the repository is located. The scheme (i.e., the part before "://") is used to determine the type of the remote server (currentyly, `file` for the local file system, `rsync` for _SSH_-accessible server and `s3` for AWS S3 are supported). Like in *pacman.conf*, *$arch*, *$repo* and *$db* can be used as placeholders for the current architecture (e.g. x86_64), the current repository name and the current DB name (if the DB name is set).
 
 *SignDB* specifies whether the repository database is signed after it was changed (set to `true`) or not (set to `false`). To sign the database, the environment variable _GPGKEY_ or defined in the relevant `makepkg.conf` file.
 
 *DBName* is optional. It allows to set the name of the repository DB explicitly. If *DBName* is not set, the repository name REPOSITORY is used as DB name. With this approach it is possible to manage the repository by *repman* under a different name than it is configured later on in `/etc/pacman.conf`. In `pacman.conf` the name of the repositoty DB must be used. This can be required for some edge cases, but usually *DBName* does not have to be set.
+
+Note: Depending on the type of the remote storage location, additional packages might have to be installed (_rsync_ for SSH-accessible servers, _s3cmd_ for AWS S3) and the corresponding configuration is required.
 
 == ENVIRONMENT
 
@@ -286,11 +298,23 @@ If a container already exists, execute the following steps:
     $ cd ~/.cache/repman/chroots/<REPOSITORY>    
     $ sudo rm -rd <YOUR USER NAME> <YOUR USER NAME>.lock
 
+=== Configuring AWS S3
+
+Some hints to configure the AWS S3 storage prior to use it with *repman*:
+
+1. Create an AWS S3 account.
+2. Create an S3 bucket with a folder structure of your desire to host the repository.
+3. Make the bucket publicly readable.
+4. Enable access control lists (ACL) for the bucket.
+5. Create a user in the AWS IAM (Identity and Access Management) for the write access to the repository.
+6. Install s3cmd and configure it (`s3cmd --configure`). Enter the access key and the secret key of the user you have just created.
+7. Configure the new repository in the *repman* configuration file.
+
 == TROUBLESHOOTING AND FAQ
 
 === Adding packages to a remote repository leads to an rsync error
 
-This error can happen, if in the PKGBUILD file of the package the _epoch_ is set. In this case, the name of the package contains a colon. If the system that hosts the remote repository does not allow colons in file names, _rsync_ throws an error.
+This error can happen, if the remote location is an _SSH_-accessible server and in the PKGBUILD file of the package the _epoch_ is set. In this case, the name of the package contains a colon. If the system that hosts the remote repository does not allow colons in file names, _rsync_ throws an error.
   
 Unfortunately, there's no other solution than either changing the remote system / hoster or to not add such a packages to the repository. Since inconsistencies can occur (after such an error occurred, the repository database can, for example, contain a package but the corresponding package tarball is not stored), *repman cleanup* helps to make the repository consistent again.
 
