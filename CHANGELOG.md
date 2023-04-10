@@ -1,5 +1,12 @@
 # Changelog
 
+## [Release 0.5.0](https://gitlab.com/mipimipi/repman/tags/v0.5.0) (2023-04-10)
+
+### Added
+
+- Support for Google Cloud Storage: repman can be used to manage custom repositories that are hosted there
+- Option `--force-no-version` for `repman update` to force an update of packages that are not tied to a specific version but that are built from a VCS such as git. So far, for updating such packages they had to be re-added with `repman add`.
+
 ## [Release 0.4.0](https://gitlab.com/mipimipi/repman/tags/v0.4.0) (2023-04-09)
 
 ### Added
