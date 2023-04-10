@@ -99,54 +99,50 @@ impl Repo {
     where
         S: AsRef<str> + Display + Eq + Hash,
     {
-        match cfg::repos()?.get(name.as_ref()) {
-            Some(cfg_repo) => {
-                let url = Url::parse(cfg_repo.server.as_str()).with_context(|| {
-                    format!("Server URL of repository {} could not be parsed", name)
-                })?;
+        let cfg_repo = cfg::repo(&name)?;
 
-                let server = server::new(&url)?;
+        let url = Url::parse(cfg_repo.server.as_str())
+            .with_context(|| format!("Server URL of repository {} could not be parsed", &name))?;
 
-                let local_dir = if !server.is_remote() {
-                    PathBuf::from(&url.path())
-                } else {
-                    cache_dir()
-                        .with_context(|| {
-                            format!(
-                                "Cannot assemble path of local directory for repository {}",
-                                name
-                            )
-                        })?
-                        .join(REPOS_SUB_PATH)
-                        .join(name.as_ref())
-                };
+        let server = server::new(&url)?;
 
-                // Make sure that local repo directory exists
-                ensure_dir(&local_dir)?;
+        let local_dir = if !server.is_remote() {
+            PathBuf::from(&url.path())
+        } else {
+            cache_dir()
+                .with_context(|| {
+                    format!(
+                        "Cannot assemble path of local directory for repository {}",
+                        &name
+                    )
+                })?
+                .join(REPOS_SUB_PATH)
+                .join(name.as_ref())
+        };
 
-                Ok(Repo {
-                    name: name.to_string(),
-                    db_name: if let Some(db_name) = &cfg_repo.db_name {
-                        db_name.to_string()
-                    } else {
-                        name.to_string()
-                    },
-                    sign_db: cfg_repo.sign_db,
-                    server,
-                    local_dir,
-                    chroot_dir: cache_dir()
-                        .with_context(|| {
-                            format!(
-                                "Cannot assemble path of chroot directory for repository {}",
-                                name
-                            )
-                        })?
-                        .join(CHROOT_SUB_PATH)
-                        .join(name.as_ref()),
-                })
-            }
-            None => Err(anyhow!("Repository {} is not configured", name)),
-        }
+        // Make sure that local repo directory exists
+        ensure_dir(&local_dir)?;
+
+        Ok(Repo {
+            name: name.to_string(),
+            db_name: if let Some(db_name) = &cfg_repo.db_name {
+                db_name.to_string()
+            } else {
+                name.to_string()
+            },
+            sign_db: cfg_repo.sign_db,
+            server,
+            local_dir,
+            chroot_dir: cache_dir()
+                .with_context(|| {
+                    format!(
+                        "Cannot assemble path of chroot directory for repository {}",
+                        name
+                    )
+                })?
+                .join(CHROOT_SUB_PATH)
+                .join(name.as_ref()),
+        })
     }
 
     /// Adds all packages whose names are contained in `pkg_names` to the current
