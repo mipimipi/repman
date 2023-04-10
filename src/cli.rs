@@ -13,7 +13,7 @@ use std::path::PathBuf;
     about = env!("CARGO_PKG_DESCRIPTION"),
     long_about = indoc! {"
     repman (Custom Repository Management) 
-    Copyright (C) 2019-2022 Michael Picht <https://gitlab.com/mipimipi/repman>
+    Copyright (C) 2019-2023 Michael Picht <https://gitlab.com/mipimipi/repman>
     
     repman helps to manage custom repositories for Arch Linux packages.
     "}
