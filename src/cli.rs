@@ -171,14 +171,15 @@ pub enum Commands {
         long_about = indoc! {"
             Updates AUR packages of a repository. For packages that are tied to a specific
             version, the update is done based on the version information (i.e., if a newer
-            package version is available according to AUR, a package is updated). This
-            approach can either be applied to all packages or only specific ones.
-            For packages that are not tied to a specific version, but that build from
+            package version is available according to AUR, a package is updated). For
+            packages that are not tied to a specific version, but that build from
             version control systems such as git, an update can be forced irrespectively of
             any version information.
-            In both cases, the newly created package will be signed if the package was already
-            signed in the past. Therefore, the environment variable GPGKEY must contain the
-            id of the corresponding gpg key.
+            The to-be-updated packages can either be specified explicitly, or all packages
+            are updated (according to one of the two approaches described above).
+            An updated package will be signed if the package was already signed before.
+            Therefore, the environment variable GPGKEY must contain the id of the
+            corresponding gpg key.
         "}
     )]
     Update {
@@ -193,6 +194,12 @@ pub enum Commands {
             group = "all_pkgs"
         )]
         clean_chroot: bool,
+        #[arg(
+            short = 'F',
+            long = "force-no-version",
+            help = "Force update / re-add all packages that have no version specified"
+        )]
+        force_no_version: bool,
         #[arg(
             short = 'A',
             long = "ignorearch",
@@ -210,12 +217,6 @@ pub enum Commands {
             help = "Don't ask for confirmation and update packages directly"
         )]
         no_confirm: bool,
-        #[arg(
-            short = 'R',
-            long = "rel-indep",
-            help = "Re-add all release independent packages"
-        )]
-        rel_indep: bool,
         pkg_names: Vec<String>,
     },
 }

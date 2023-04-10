@@ -1021,7 +1021,7 @@ impl Repo {
     fn pkgs_to_be_updated<S>(
         &self,
         pkg_names: Option<&[S]>,
-        rel_indep: bool,
+        force_no_version: bool,
         no_confirm: bool,
     ) -> anyhow::Result<Vec<&str>>
     where
@@ -1033,28 +1033,26 @@ impl Repo {
         );
         // Extract names of packages that are contained in the current
         // repository
-        let valid_pkg_names = self
-            .valid_pkg_names(pkg_names)
-            .with_context(|| err_msg.clone())?;
+        let valid_pkg_names = self.valid_pkg_names(pkg_names).context(err_msg.clone())?;
 
         // Initialize AUR information from AUR web interface. If names of to
         // be updated packages were submitted (i.e., `pkg_names` is
         // `Some(...)`), error messages are printed if these package could
         // not be found in AUR. If no packages names were submitted, no
         // messages will be printed
-        aur::try_init(&valid_pkg_names, pkg_names.is_some()).with_context(|| err_msg.clone())?;
+        aur::try_init(&valid_pkg_names, pkg_names.is_some()).context(err_msg.clone())?;
 
-        if rel_indep {
-            let pkgs_rel_indep = aur::pkg_name2base_rel_indep().context(err_msg)?;
+        if force_no_version {
+            let pkgs_upd = aur::pkg_name2base_rel_indep().context(err_msg)?;
 
-            if pkgs_rel_indep.is_empty() {
+            if pkgs_upd.is_empty() {
                 msg!("No updates available");
                 return Ok(vec![]);
             }
 
-            if !pkgs_rel_indep.is_empty() && !no_confirm {
-                msg!("Release-independent packages to be updated / re-added");
-                for pkg in &pkgs_rel_indep {
+            if !pkgs_upd.is_empty() && !no_confirm {
+                msg!("Packages to be updated / re-added");
+                for pkg in &pkgs_upd {
                     println!("    {}", pkg.0);
                 }
                 if !Confirm::new()
@@ -1069,7 +1067,7 @@ impl Repo {
                 println!();
             }
 
-            Ok(pkgs_rel_indep
+            Ok(pkgs_upd
                 .iter()
                 .map(|pkg_name2base| pkg_name2base.1)
                 .collect())
@@ -1458,7 +1456,7 @@ impl Repo {
         pkg_names: Option<&[S]>,
         no_chroot: bool,
         ignore_arch: bool,
-        rel_indep: bool,
+        force_no_version: bool,
         clean_chroot: bool,
         no_confirm: bool,
     ) -> anyhow::Result<()>
@@ -1472,7 +1470,7 @@ impl Repo {
             if self.db_exists() {
                 // Retrieve base names of packages that must be updated
                 let pkg_bases = self
-                    .pkgs_to_be_updated(pkg_names, rel_indep, no_confirm)
+                    .pkgs_to_be_updated(pkg_names, force_no_version, no_confirm)
                     .with_context(|| err_msg.clone())?;
 
                 if pkg_bases.is_empty() {

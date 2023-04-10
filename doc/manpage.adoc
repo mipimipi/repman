@@ -141,7 +141,7 @@ If `--nochroot` is set, the build does not take place in a chroot container. Bui
 
 If `--ignorearch` is set, the architectures specified in the `arch` array of PKGBUILD are ignored.
 
-With `--rel-indep` an update of release independent packages can be forced. These are packages that build from a version control system and are not tied to a specific version.
+With `--force-no-version` an update of packages that are not tied to a specific version can be forced. These are packages that build from a version control system such as _git_.
 
 Before updates from _AUR_ are applied, the user is asked for confirmation. This behavior can be switched off with `--noconfirm`.
 
@@ -181,6 +181,10 @@ Remove the chroot container after executing a command. This flag is available fo
 
 Directory where a PKGBUILD file is stored. The corresponding packages will be built and added to a repository.
 
+=== --force-no-version, -F
+
+Force update / re-adding of packages that build from a version control system (VCS) such as git, and that are not tied to a specific version. Such packages are identified by the corresponding name suffix ("-git", for example). The list of VCS suffixes is maintained in the global configuration file of *repman*.
+
 === --ignorearch, -A
 
 If the flag is set, the architectures specified in the `arch` array of the PKGBUILD file are ignored.
@@ -192,10 +196,6 @@ Do not build packages in chroot container. Building in a chroot container is the
 === --noconfirm
 
 Do not ask the user for confirmation.
-
-=== `--rel-indep`, `-R`
-
-Force update / re-adding of release independent packages. These are packages that build from a version control system (VCS) and are not tied to a specific version. Such packages are identified by the corresponding name suffix ("-git", for example). The list of VCS suffixes is maintained in the global configuration file of *repman*.
 
 === --sign, -s
 
