@@ -30,6 +30,7 @@ install:
 	@install -Dm755 target/release/$(PROG) $(DESTDIR)/usr/bin/$(PROG)
 	@install -Dm755 $(PROG)-all $(DESTDIR)/usr/bin/$(PROG)-all
 	@install -Dm644 "$(PROG).8" -t "$(DESTDIR)/usr/share/man/man8/"
+	@install -Dm644 "cfg/$(PROG).conf" -t "$(DESTDIR)/etc/"
 
 # remove build results
 clean:

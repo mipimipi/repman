@@ -43,11 +43,11 @@ pub enum Commands {
         #[arg(short = 'd', long = "directory", action = clap::ArgAction::Append, help = "Local directory with PKGBUILD file")]
         pkgbuild_dirs: Vec<PathBuf>,
         #[arg(
-            short = 'n',
-            long = "nochroot",
-            help = "Don't build packages in chroot environment"
+            short = 'c',
+            long = "clean",
+            help = "Remove chroot environment after build"
         )]
-        no_chroot: bool,
+        clean_chroot: bool,
         #[arg(
             short = 'A',
             long = "ignorearch",
@@ -55,11 +55,11 @@ pub enum Commands {
         )]
         ignore_arch: bool,
         #[arg(
-            short = 'c',
-            long = "clean",
-            help = "Remove chroot environment after build"
+            short = 'n',
+            long = "nochroot",
+            help = "Don't build packages in chroot environment"
         )]
-        clean_chroot: bool,
+        no_chroot: bool,
         #[arg(short = 's', long = "sign", help = "Sign packages")]
         sign: bool,
     },
@@ -169,23 +169,30 @@ pub enum Commands {
         name = "update",
         about = "Update AUR packages of a repository",
         long_about = indoc! {"
-            Updates either all or only specific AUR packages of a repository. The packages
-            for which a newer version exist in AUR are determined, new package versions are
-            built and replace the current versions in the repository.
-            If the old package version was signed, the new version will also be signed.
-            Therefore, the environment variable GPGKEY must contain the id of the
-            corresponding gpg key.
+            Updates AUR packages of a repository. For packages that are tied to a specific
+            version, the update is done based on the version information (i.e., if a newer
+            package version is available according to AUR, a package is updated). This
+            approach can either be applied to all packages or only specific ones.
+            For packages that are not tied to a specific version, but that build from
+            version control systems such as git, an update can be forced irrespectively of
+            any version information.
+            In both cases, the newly created package will be signed if the package was already
+            signed in the past. Therefore, the environment variable GPGKEY must contain the
+            id of the corresponding gpg key.
         "}
     )]
     Update {
         #[arg(short = 'r', long = "repo", help = "Repository")]
         repo_name: String,
+        #[arg(long, help = "All packages", group = "all_pkgs")]
+        all: bool,
         #[arg(
-            short = 'n',
-            long = "nochroot",
-            help = "Don't build packages in chroot environment"
+            short = 'c',
+            long = "clean",
+            help = "Remove chroot environment after build",
+            group = "all_pkgs"
         )]
-        no_chroot: bool,
+        clean_chroot: bool,
         #[arg(
             short = 'A',
             long = "ignorearch",
@@ -193,18 +200,22 @@ pub enum Commands {
         )]
         ignore_arch: bool,
         #[arg(
-            short = 'c',
-            long = "clean",
-            help = "Remove chroot environment after build"
+            short = 'n',
+            long = "nochroot",
+            help = "Don't build packages in chroot environment"
         )]
-        clean_chroot: bool,
+        no_chroot: bool,
         #[arg(
             long = "noconfirm",
             help = "Don't ask for confirmation and update packages directly"
         )]
         no_confirm: bool,
-        #[arg(long, help = "All packages")]
-        all: bool,
+        #[arg(
+            short = 'R',
+            long = "rel-indep",
+            help = "Re-add all release independent packages"
+        )]
+        rel_indep: bool,
         pkg_names: Vec<String>,
     },
 }

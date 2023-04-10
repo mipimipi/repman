@@ -1,9 +1,11 @@
+use crate::internal::cfg;
 use alpm::vercmp;
 use anyhow::{anyhow, Context};
 use arch_msgs::*;
 use const_format::concatcp;
 use duct::cmd;
 use once_cell::sync::OnceCell;
+use regex::Regex;
 use std::{
     cmp::Eq,
     collections::HashMap,
@@ -45,7 +47,7 @@ struct AurItem {
 /// pkg_name1 -> pkg_base1
 /// pkg_name2 -> pkg_base1
 /// ```
-type PkgName2Base = HashMap<String, String>;
+pub type PkgName2Base = HashMap<String, String>;
 
 /// Relevant package info from AUR. The package base is used as key for
 /// `AurPkgInfos`
@@ -65,9 +67,8 @@ struct AurData(PkgName2Base, PkgInfos);
 static AUR_DATA: OnceCell<AurData> = OnceCell::new();
 
 /// Retrieves information from AUR for packages with names contained in
-/// pkg_names. The data is stored in global variables. If `check_exists` is
-/// true, an error messages are printed for packages that could be found
-/// in AUR
+/// pkg_names. The data is stored in global variables. If `check_exists` is true,
+// error messages are printed for packages that could not be found in AUR
 pub fn try_init<S>(pkg_names: &[S], check_exists: bool) -> anyhow::Result<()>
 where
     S: AsRef<str> + Display + Eq + Hash,
@@ -144,12 +145,6 @@ fn aur_data() -> &'static AurData {
         .get()
         .unwrap_or_else(|| panic!("Cannot access AUR data"))
 }
-fn pkg_name2base() -> &'static PkgName2Base {
-    &aur_data().0
-}
-fn pkg_infos() -> &'static PkgInfos {
-    &aur_data().1
-}
 
 /// Clones a package repository from AUR to dir
 fn clone_pkg_repo<P, S>(pkg_base: S, dir: P) -> anyhow::Result<PathBuf>
@@ -224,6 +219,46 @@ where
     pkg_repo_dirs
 }
 
+fn pkg_name2base() -> &'static PkgName2Base {
+    &aur_data().0
+}
+
+fn pkg_infos() -> &'static PkgInfos {
+    &aur_data().1
+}
+
+/// Filter release independent packages (package name and base) from all
+/// packages. These packages are identified by their suffix. If their
+/// name ends with one of the VCS suffixes maintained in the repman
+/// configuration files, they are considered being release independent.
+pub fn pkg_name2base_rel_indep() -> anyhow::Result<Vec<(&'static str, &'static str)>> {
+    // Create regex from configured VSC suffixes
+    let mut re_str = ".+-(".to_string();
+    for (i, suffix) in cfg::cfg()
+        .context("Cannot determine release independent packages")?
+        .vcs_suffixes
+        .iter()
+        .enumerate()
+    {
+        if i > 0 {
+            re_str.push('|');
+        }
+        re_str.push_str(suffix);
+    }
+    re_str.push(')');
+    let re = Regex::new(&re_str).unwrap();
+
+    // Filter release independent packages from all packages
+    let mut pkgs: Vec<(&str, &str)> = vec![];
+    for (pkg_name, pkg_base) in pkg_name2base() {
+        if re.is_match(pkg_name) {
+            pkgs.push((pkg_name, pkg_base));
+        }
+    }
+
+    Ok(pkgs)
+}
+
 /// Information about package updates
 pub struct PkgUpd<'a> {
     pub name: &'a str,
@@ -232,7 +267,7 @@ pub struct PkgUpd<'a> {
     pub pkg_base: &'a str,
 }
 
-/// Determines relevant updates from AUR for packages with names in pkg_names.
+/// Determines relevant updates from AUR for packages with names in db_pkgs.
 /// db_pkgs contains information about all packages currently contained in the
 /// repository DB.
 /// Update information is returned as a vector of a struct consisting of:

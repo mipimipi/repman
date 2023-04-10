@@ -141,6 +141,8 @@ If `--nochroot` is set, the build does not take place in a chroot container. Bui
 
 If `--ignorearch` is set, the architectures specified in the `arch` array of PKGBUILD are ignored.
 
+With `--rel-indep` an update of release independent packages can be forced. These are packages that build from a version control system and are not tied to a specific version.
+
 Before updates from _AUR_ are applied, the user is asked for confirmation. This behavior can be switched off with `--noconfirm`.
 
 Updated packages are signed automatically if the package was signed before the update and if the environment variable _GPGKEY_ is set.
@@ -191,11 +193,21 @@ Do not build packages in chroot container. Building in a chroot container is the
 
 Do not ask the user for confirmation.
 
+=== `--rel-indep`, `-R`
+
+Force update / re-adding of release independent packages. These are packages that build from a version control system (VCS) and are not tied to a specific version. Such packages are identified by the corresponding name suffix ("-git", for example). The list of VCS suffixes is maintained in the global configuration file of *repman*.
+
 === --sign, -s
 
 Sign packages with _gpg_. The gpg key to be used must be stored in the environment variable _GPGKEY_ or defined in the relevant `makepkg.conf` file. 
 
 == CONFIGURATION
+
+=== Global Configuration
+
+The global *repman* configuration is stored in `/etc/repman.conf`. A default configuration is coming with *repman*.
+
+=== Repositories
 
 Repositories which are to be managed with *repman* must be configured in the configuration file *repos.conf* (see below). The configuration is done in _TOML_ format. Some examples:
 
@@ -322,8 +334,8 @@ Some hints to configure the Google Cloud Storage prior to use it with *repman*:
 2. Create a project and a bucket with a folder structure of your desire to host the repository.
 3. Make sure that the folders that contain the repository data are publicly readable.
 4. Configure the write access
-4. Install Google Cloud CLI on your local machine and initialize it (`gcloud init`)
-5. Configure the new repository in the *repman* configuration file.
+5. Install Google Cloud CLI on your local machine and initialize it (`gcloud init`)
+6. Configure the new repository in the *repman* configuration file.
 
 Note: *repman* uses the _gsutil_ (part of _gcloud_) to transfer data between the local file system and Google Cloud Storage. Make sure to switch to the correct configuration with _gcloud_ before running *repman*.
 

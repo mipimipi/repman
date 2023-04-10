@@ -1021,6 +1021,97 @@ impl Repo {
             .as_str())
     }
 
+    /// Determines the base names of packages to be updated
+    fn pkgs_to_be_updated<S>(
+        &self,
+        pkg_names: Option<&[S]>,
+        rel_indep: bool,
+        no_confirm: bool,
+    ) -> anyhow::Result<Vec<&str>>
+    where
+        S: AsRef<str> + Display + Eq + Hash,
+    {
+        let err_msg = format!(
+            "Cannot determine to-be-updated packages for repository {}",
+            &self.name
+        );
+        // Extract names of packages that are contained in the current
+        // repository
+        let valid_pkg_names = self
+            .valid_pkg_names(pkg_names)
+            .with_context(|| err_msg.clone())?;
+
+        // Initialize AUR information from AUR web interface. If names of to
+        // be updated packages were submitted (i.e., `pkg_names` is
+        // `Some(...)`), error messages are printed if these package could
+        // not be found in AUR. If no packages names were submitted, no
+        // messages will be printed
+        aur::try_init(&valid_pkg_names, pkg_names.is_some()).with_context(|| err_msg.clone())?;
+
+        if rel_indep {
+            let pkgs_rel_indep = aur::pkg_name2base_rel_indep().context(err_msg)?;
+
+            if pkgs_rel_indep.is_empty() {
+                msg!("No updates available");
+                return Ok(vec![]);
+            }
+
+            if !pkgs_rel_indep.is_empty() && !no_confirm {
+                msg!("Release-independent packages to be updated / re-added");
+                for pkg in &pkgs_rel_indep {
+                    println!("    {}", pkg.0);
+                }
+                if !Confirm::new()
+                    .with_prompt("Continue?")
+                    .default(true)
+                    .show_default(true)
+                    .interact()
+                    .unwrap()
+                {
+                    return Ok(vec![]);
+                }
+                println!();
+            }
+
+            Ok(pkgs_rel_indep
+                .iter()
+                .map(|pkg_name2base| pkg_name2base.1)
+                .collect())
+        } else {
+            // Determine for which of these packages there are updates available
+            // in AUR
+            let pkgs_upd = aur::pkg_updates(self.db_pkgs().with_context(|| err_msg.clone())?)
+                .with_context(|| err_msg.clone())?;
+
+            if pkgs_upd.is_empty() {
+                msg!("No updates available");
+                return Ok(vec![]);
+            }
+
+            if !pkgs_upd.is_empty() && !no_confirm {
+                msg!("Updates available");
+                for pkg_upd in &pkgs_upd {
+                    println!(
+                        "    {} {} -> {}",
+                        pkg_upd.name, pkg_upd.old_version, pkg_upd.new_version
+                    );
+                }
+                if !Confirm::new()
+                    .with_prompt("Continue?")
+                    .default(true)
+                    .show_default(true)
+                    .interact()
+                    .unwrap()
+                {
+                    return Ok(vec![]);
+                }
+                println!();
+            }
+
+            Ok(pkgs_upd.iter().map(|pkg_upd| pkg_upd.pkg_base).collect())
+        }
+    }
+
     /// Prepares the chroot container for usage. I.e., if the container exists, it is
     /// updated. If it does not exist, it is being created
     fn prepare_chroot(&self) -> anyhow::Result<()> {
@@ -1371,6 +1462,7 @@ impl Repo {
         pkg_names: Option<&[S]>,
         no_chroot: bool,
         ignore_arch: bool,
+        rel_indep: bool,
         clean_chroot: bool,
         no_confirm: bool,
     ) -> anyhow::Result<()>
@@ -1382,48 +1474,13 @@ impl Repo {
         lock!(self);
         exec_on_repo!(self, {
             if self.db_exists() {
-                // Extract names of packages that are contained in the current
-                // repository
-                let valid_pkg_names = self
-                    .valid_pkg_names(pkg_names)
+                // Retrieve base names of packages that must be updated
+                let pkg_bases = self
+                    .pkgs_to_be_updated(pkg_names, rel_indep, no_confirm)
                     .with_context(|| err_msg.clone())?;
 
-                // Initialize AUR information from AUR web interface. If names of to
-                // be updated packages were submitted (i.e., `pkg_names` is
-                // `Some(...)`), error messages are printed if these package could
-                // not be found in AUR. If no packages names were submitted, no
-                // messages will be printed
-                aur::try_init(&valid_pkg_names, pkg_names.is_some())
-                    .with_context(|| err_msg.clone())?;
-
-                // Determine for which of these packages there are updates available
-                // in AUR
-                let pkg_upds = aur::pkg_updates(self.db_pkgs().with_context(|| err_msg.clone())?)
-                    .with_context(|| err_msg.clone())?;
-
-                if pkg_upds.is_empty() {
-                    msg!("No updates available");
+                if pkg_bases.is_empty() {
                     return Ok(());
-                }
-
-                if !no_confirm {
-                    msg!("Updates available");
-                    for pkg_upd in &pkg_upds {
-                        println!(
-                            "    {} {} -> {}",
-                            pkg_upd.name, pkg_upd.old_version, pkg_upd.new_version
-                        );
-                    }
-                    if !Confirm::new()
-                        .with_prompt("Continue?")
-                        .default(true)
-                        .show_default(true)
-                        .interact()
-                        .unwrap()
-                    {
-                        return Ok(());
-                    }
-                    println!();
                 }
 
                 // Execute package updates
@@ -1436,11 +1493,9 @@ impl Repo {
                     let (pkgbuild_dir, pkg_dir) = self
                         .ensure_pkg_tmp_dirs()
                         .with_context(|| err_msg.clone())?;
-                    let aur_pkg_names: Vec<&str> =
-                        pkg_upds.iter().map(|pkg_upd| pkg_upd.pkg_base).collect();
                     let mut built_pkgs: Vec<Pkg> = vec![];
 
-                    for pkgbuild in PkgBuild::from_aur(Some(&aur_pkg_names), pkgbuild_dir)? {
+                    for pkgbuild in PkgBuild::from_aur(Some(&pkg_bases), pkgbuild_dir)? {
                         match Pkg::build(
                             &pkgbuild,
                             no_chroot,

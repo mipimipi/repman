@@ -155,6 +155,7 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
             clean_chroot,
             no_chroot,
             ignore_arch,
+            rel_indep,
             no_confirm,
             all,
             pkg_names,
@@ -165,18 +166,30 @@ fn execute(args: &cli::Args) -> anyhow::Result<()> {
                 ));
             }
 
-            match *all {
+            // Normally, this check should be done with the arg groups feature of
+            // clap, but this did not work for whatevere reason
+            if *rel_indep && *all {
+                warning!("Specifýing both, --rel-indep and --all, does not make sense. --rel-indep makes repman already checking all packages'");
+                return Ok(());
+            }
+
+            // Both CLI options (--all, --rel-indep) imply that all packages are
+            // taken into account. Thus, there is no need to set one of these
+            // options and in addition submit package names. On the other hand,
+            // if none of the two options is set, package names must be submitted
+            match *rel_indep || *all {
                 true if !pkg_names.is_empty() => Err(anyhow!(
-                    "Either submit package names or set option '--all', but not both."
+                    "Either submit package names or set one of the options '--all' or '--rel-indep', but don't do both"
                 )),
                 false if pkg_names.is_empty() => {
-                    warning!("Either submit package names or set option '--all'");
+                    warning!("Either submit package names or set one of the options '--all' or '--rel-indep'");
                     Ok(())
                 }
                 _ => Repo::new(repo_name)?.update(
-                    if *all { None } else { Some(pkg_names) },
+                    if *rel_indep || *all { None } else { Some(pkg_names) },
                     *no_chroot,
                     *ignore_arch,
+                    *rel_indep,
                     *clean_chroot,
                     *no_confirm,
                 ),
