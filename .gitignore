@@ -3,6 +3,7 @@ completions*
 Cargo.lock
 
 !repman-all
+!cfg/repman.conf
 
 # Added by cargo
 
