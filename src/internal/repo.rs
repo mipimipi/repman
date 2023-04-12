@@ -1,7 +1,8 @@
 //! Function, macros, etc. for working on a repository
 
 use crate::internal::{
-    aur, cfg,
+    aur::AurData,
+    cfg,
     common::*,
     deps::Deps,
     pkg::Pkg,
@@ -171,7 +172,7 @@ impl Repo {
         }
 
         // Initialize AUR information from AUR web interface
-        aur::try_init(aur_pkg_names, true).with_context(|| err_msg.clone())?;
+        let aur_data = AurData::new(aur_pkg_names, true).with_context(|| err_msg.clone())?;
 
         exec_with_tmp_data!({
             // Create tmp dirs for PKGBUILD scripts and package file
@@ -186,7 +187,7 @@ impl Repo {
                 pkgbuilds.push(pkgbuild);
             }
             // ... and by downloading package PKGBUILD files from AUR
-            for pkgbuild in PkgBuild::from_aur(Some(aur_pkg_names), pkgbuild_dir)
+            for pkgbuild in PkgBuild::from_aur(&aur_data, Some(aur_pkg_names), pkgbuild_dir)
                 .with_context(|| err_msg.clone())?
             {
                 pkgbuilds.push(pkgbuild);
@@ -1018,32 +1019,19 @@ impl Repo {
     }
 
     /// Determines the base names of packages to be updated
-    fn pkgs_to_be_updated<S>(
-        &self,
-        pkg_names: Option<&[S]>,
+    fn pkgs_to_be_updated<'a>(
+        &'a self,
+        aur_data: &'a AurData,
         force_no_version: bool,
         no_confirm: bool,
-    ) -> anyhow::Result<Vec<&str>>
-    where
-        S: AsRef<str> + Display + Eq + Hash,
-    {
+    ) -> anyhow::Result<Vec<&'a str>> {
         let err_msg = format!(
             "Cannot determine to-be-updated packages for repository {}",
             &self.name
         );
-        // Extract names of packages that are contained in the current
-        // repository
-        let valid_pkg_names = self.valid_pkg_names(pkg_names).context(err_msg.clone())?;
-
-        // Initialize AUR information from AUR web interface. If names of to
-        // be updated packages were submitted (i.e., `pkg_names` is
-        // `Some(...)`), error messages are printed if these package could
-        // not be found in AUR. If no packages names were submitted, no
-        // messages will be printed
-        aur::try_init(&valid_pkg_names, pkg_names.is_some()).context(err_msg.clone())?;
 
         if force_no_version {
-            let pkgs_upd = aur::pkg_name2base_rel_indep().context(err_msg)?;
+            let pkgs_upd = aur_data.pkg_name2base_no_version().context(err_msg)?;
 
             if pkgs_upd.is_empty() {
                 msg!("No updates available");
@@ -1074,7 +1062,8 @@ impl Repo {
         } else {
             // Determine for which of these packages there are updates available
             // in AUR
-            let pkgs_upd = aur::pkg_updates(self.db_pkgs().with_context(|| err_msg.clone())?)
+            let pkgs_upd = aur_data
+                .pkg_updates(self.db_pkgs().with_context(|| err_msg.clone())?)
                 .with_context(|| err_msg.clone())?;
 
             if pkgs_upd.is_empty() {
@@ -1468,9 +1457,21 @@ impl Repo {
         lock!(self);
         exec_on_repo!(self, {
             if self.db_exists() {
+                // Extract names of packages that are contained in the current
+                // repository
+                let valid_pkg_names = self.valid_pkg_names(pkg_names).context(err_msg.clone())?;
+
+                // Initialize AUR information from AUR web interface. If names of to
+                // be updated packages were submitted (i.e., `pkg_names` is
+                // `Some(...)`), error messages are printed if these package could
+                // not be found in AUR. If no packages names were submitted, no
+                // messages will be printed
+                let aur_data =
+                    AurData::new(&valid_pkg_names, pkg_names.is_some()).context(err_msg.clone())?;
+
                 // Retrieve base names of packages that must be updated
                 let pkg_bases = self
-                    .pkgs_to_be_updated(pkg_names, force_no_version, no_confirm)
+                    .pkgs_to_be_updated(&aur_data, force_no_version, no_confirm)
                     .with_context(|| err_msg.clone())?;
 
                 if pkg_bases.is_empty() {
@@ -1489,7 +1490,7 @@ impl Repo {
                         .with_context(|| err_msg.clone())?;
                     let mut built_pkgs: Vec<Pkg> = vec![];
 
-                    for pkgbuild in PkgBuild::from_aur(Some(&pkg_bases), pkgbuild_dir)? {
+                    for pkgbuild in PkgBuild::from_aur(&aur_data, Some(&pkg_bases), pkgbuild_dir)? {
                         match Pkg::build(
                             &pkgbuild,
                             no_chroot,

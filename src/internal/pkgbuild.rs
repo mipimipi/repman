@@ -1,4 +1,4 @@
-use crate::internal::aur;
+use crate::internal::aur::AurData;
 use anyhow::{anyhow, Context};
 use arch_msgs::*;
 use duct::cmd;
@@ -64,13 +64,17 @@ impl PkgBuild {
     /// whose names are contained in `Some(pkg_names)`. Otherwise, all package
     /// repositories are considered where package information has been retrieved
     /// from AUR before
-    pub fn from_aur<P, S>(pkg_names: Option<&[S]>, pkgbuild_dir: P) -> anyhow::Result<Vec<PkgBuild>>
+    pub fn from_aur<P, S>(
+        aur_data: &AurData,
+        pkg_names: Option<&[S]>,
+        pkgbuild_dir: P,
+    ) -> anyhow::Result<Vec<PkgBuild>>
     where
         P: AsRef<Path>,
         S: AsRef<str> + Display + Eq + Hash,
     {
         let mut pkgbuilds: Vec<PkgBuild> = vec![];
-        for pkg_repo_dir in aur::clone_pkg_repos(pkg_names, pkgbuild_dir) {
+        for pkg_repo_dir in aur_data.clone_pkg_repos(pkg_names, pkgbuild_dir) {
             pkgbuilds.push(PkgBuild::try_from(pkg_repo_dir.join(PKGBUILD_FILE_NAME))?);
         }
 

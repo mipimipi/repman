@@ -33,7 +33,7 @@ A very important goal of repman is to keep the local system, i.e., the system th
 
 == Installation
 
-There is an AUR package for repman: https://aur.archlinux.org/packages/repman-git/[repman-git]. This package can be installed with tools such as https://github.com/Jguer/yay[yay].
+There is an AUR package for repman: https://aur.archlinux.org/packages/repman-git/[repman-git]. This package can be installed with https://wiki.archlinux.org/title/AUR_helpers[AUR helpers] such as https://github.com/Jguer/yay[yay].
 
 Another option is a manual installation. For this execute:
 
@@ -52,7 +52,7 @@ Execute `repman help` to get information about how to call repman. repman's link
 
 == Details
 
-repman utilizes tools like https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_clean_chroot[makechrootpkg], https://www.archlinux.org/pacman/makepkg.8.html[makepkg], https://www.archlinux.org/pacman/repo-add.8.html[repo-add],  and repo-remove. https://wiki.archlinux.org/index.php/Rsync[rsync] is used to transfer repositories between remote locations and the local file system. The local copies are manipulated with the above-mentioned tools.
+repman utilizes tools like https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_clean_chroot[makechrootpkg], https://www.archlinux.org/pacman/makepkg.8.html[makepkg], https://www.archlinux.org/pacman/repo-add.8.html[repo-add],  and repo-remove. https://wiki.archlinux.org/index.php/Rsync[rsync], or vendor-specific tools such as https://github.com/s3tools/s3cmd[s3cmd] or https://cloud.google.com/storage/docs/gsutil[gsutil] are used to transfer repositories between remote locations and the local file system. The local copies are manipulated with the above-mentioned tools.
 
 == License
 

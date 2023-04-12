@@ -9,6 +9,7 @@ Files: .gitignore
        README.adoc
        CHANGELOG.md
        repman-all
+       cfg/*
        doc/*
        src/*
 Copyright: 2019-2023 Michael Picht <mipi@fsfe.org>
