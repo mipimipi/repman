@@ -33,7 +33,11 @@ A very important goal of repman is to keep the local system, i.e., the system th
 
 == Installation
 
-There is an AUR package for repman: https://aur.archlinux.org/packages/repman-git/[repman-git]. This package can be installed with https://wiki.archlinux.org/title/AUR_helpers[AUR helpers] such as https://github.com/Jguer/yay[yay].
+=== From AUR with AUR Helper
+
+There is are AUR packages for repman: https://aur.archlinux.org/packages/repman/[repman] and https://aur.archlinux.org/packages/repman-git/[repman-git]. They can be installed with https://wiki.archlinux.org/title/AUR_helpers[AUR helpers] such as https://github.com/Jguer/yay[yay].
+
+=== Manually from Sources
 
 Another option is a manual installation. For this execute:
 
@@ -41,6 +45,12 @@ Another option is a manual installation. For this execute:
     $ cd repman    
     $ make
     $ sudo make install
+
+=== Container Image
+
+There are container images for x86_64 based an Arch Linux containing repman. These images can be used in CI pipelines, for example. To download the latest image execute:
+
+      $ docker pull registry.gitlab.com/mipimipi/repman:latest
 
 == Configuration
 

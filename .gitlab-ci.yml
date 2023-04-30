@@ -1,0 +1,64 @@
+# Pipeline to build repman images for different architectures and store them
+# under a multi-arch manifest on docker hub.
+# The architecture-specific images are built in child pipelines (one for each
+# architecture) and pushed to docker hub (build stage).
+# In the deploy stage, a multi-arch manifest is created and pushed to docker hub
+# as well. After that, architecture-specific tags are removed from docker hub.
+#
+# Note: Architecture-specific images have to be built separately by a specific
+#       runner for the corresponding architecture since a build using emulation
+#       (qemu) does not work. Although images could be built in one go with
+#       docker buildx build -platform=<PLATFORM1>,<PLATFORM2>,... , running
+#       images where emulation was used during build would lead to an error
+
+stages:
+  - build
+  - deploy
+
+# General start condition: Execute jobs only for the default branch and if a tag
+# exists  
+.start_condition: &start_condition
+  only:
+    - tags
+  except:
+    - branches
+
+# Build images for different architectures and push them to docker hub
+build_aarch64:
+  stage: build
+  <<: *start_condition  
+  trigger:
+    include: ci/gitlab-ci.aarch64.yml
+    strategy: depend
+build_x86_64:
+  stage: build
+  <<: *start_condition  
+  trigger:
+    include: ci/gitlab-ci.x86_64.yml
+    strategy: depend
+
+# Create multi-arch manifest and push it do docker hub
+build_multi-arch:
+  stage: deploy
+  <<: *start_condition  
+  image: docker:23.0.3
+  services:
+    - docker:23.0.3-dind
+  before_script:
+    # Add dependencies of the tag remove script
+    - apk add --no-cache bash curl jq
+    # Login to docker hub
+    - echo -n $DH_ACCESS_TOKEN | docker login -u "$DH_USERNAME" --password-stdin $DH_URL
+  script:
+    # Create multi arch manifests and push them to docker hub (one with tag
+    # "latest", one with the version as tag)
+    - docker manifest create ${DH_IMAGE}:latest --amend ${DH_IMAGE}:aarch64-latest --amend ${DH_IMAGE}:x86_64-latest
+    - docker manifest push --purge ${DH_IMAGE}:latest
+    - docker manifest create ${DH_IMAGE}:${CI_COMMIT_TAG#v} --amend ${DH_IMAGE}:aarch64-latest --amend ${DH_IMAGE}:x86_64-latest
+    - docker manifest push --purge ${DH_IMAGE}:${CI_COMMIT_TAG#v}
+    # Delete architecture-specific tags from docker hub (they are not required
+    # anymore, and it is very unlikely that they were referred to since they
+    # were just created by the build jobs)
+    - ci/rm_from_docker_hub.sh $DH_USERNAME $DH_PASSWORD $DH_REPO_NAME aarch64-latest x86_64-latest
+  after_script:
+    - docker logout $DH_URL

@@ -3,13 +3,16 @@ Upstream-Name: repman
 Upstream-Contact: Michael Picht <mipi@fsfe.org>
 Source: gitlab.com/mipimipi/repman
 
-Files: .gitignore
+Files: *.gitignore
+       .gitlab-ci.yml
        *.toml
+       Dockerfile
        Makefile
        README.adoc
        CHANGELOG.md
        repman-all
        cfg/*
+       ci/*
        doc/*
        src/*
 Copyright: 2019-2023 Michael Picht <mipi@fsfe.org>

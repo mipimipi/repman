@@ -1,0 +1,60 @@
+# Jobs to build repman for aarch64. The build job is executed on a server in the
+# Hetzner cloud. The server is started prior to the build job (start_server) and
+# stopped afterwards (stop_server). The resulting docker image is pushed to
+# docker hub by the build job
+
+# Code snippet to prepare controlling of Hetzner cloud via CLI
+.prep_hcloud: &prep_hcloud
+  before_script:
+    # Install hcloud (requires ca-certficates)
+    - apk add --no-cache ca-certificates hcloud
+    # Create hcloud configuration
+    - mkdir -p ${HOME}/.config/hcloud
+    - |   
+      cat >> ${HOME}/.config/hcloud/cli.toml << EOF
+      active_context = 'default'
+      [[contexts]]
+      name = 'default'
+      token = '${HETZNER_API_TOKEN}'
+      EOF
+
+# Start build server
+start_server:
+  stage: .pre
+  image: alpine
+  retry: 2  
+  <<: *prep_hcloud
+  script:
+    - hcloud server poweron $BUILD_SRV_AARCH64
+ 
+# Build job for aarch64
+build_aarch64:
+  stage: build
+  image: docker:23.0.3
+  services:
+    - docker:23.0.3-dind
+  tags:
+    - aarch64
+  retry: 2  
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "/certs"
+    ARCH: aarch64
+  before_script:
+    - echo -n $DH_ACCESS_TOKEN | docker login -u "$DH_USERNAME" --password-stdin $DH_URL
+  script:
+    - docker build -t ${DH_IMAGE}:${ARCH}-latest .
+    - docker push --all-tags $DH_IMAGE
+  after_script:  
+    - docker logout $DH_URL
+
+# Stop build server
+stop_server:
+  stage: .post
+  image: alpine
+  retry: 2  
+  # Stop server after build job is done, even if the build was not successful
+  when: always
+  <<: *prep_hcloud
+  script:
+    - hcloud server poweroff $BUILD_SRV_AARCH64
