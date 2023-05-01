@@ -1,5 +1,15 @@
 # Changelog
 
+## [Release 0.6.0](https://gitlab.com/mipimipi/repman/tags/v0.6.0) (2023-05-01)
+
+### Added
+
+- Docker images for x86_64 and AArch64
+
+### Removed
+
+- Support for Armv7h since I do not have the possibility to test repman for this architecture
+
 ## [Release 0.5.0](https://gitlab.com/mipimipi/repman/tags/v0.5.0) (2023-04-10)
 
 ### Added
