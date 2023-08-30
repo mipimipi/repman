@@ -21,7 +21,7 @@ use std::{
 // from package file path
 lazy_static! {
     static ref RE_PKG_FILE: Regex =
-        Regex::new(r#"^(.*/)?(.+)-([^-]+)-([^-]+)-([^-]+)(\.pkg\.tar\.[^\.]+)$"#).unwrap();
+        Regex::new(r"^(.*/)?(.+)-([^-]+)-([^-]+)-([^-]+)(\.pkg\.tar\.[^\.]+)$").unwrap();
 }
 
 /// Package file

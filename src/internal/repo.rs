@@ -463,7 +463,7 @@ impl Repo {
         // Determine if distributed build is wanted
         lazy_static! {
             static ref RE_DISTCC: Regex =
-                Regex::new(r#"\n[^#]*BUILDENV *= *[^\)]*[^!]+distcc"#).unwrap();
+                Regex::new(r"\n[^#]*BUILDENV *= *[^\)]*[^!]+distcc").unwrap();
         }
         let content = fs::read_to_string(makepkg_conf).with_context(|| err_msg.clone())?;
         let captures = RE_DISTCC.captures(content.as_str());
@@ -659,7 +659,7 @@ impl Repo {
             Ok(value) => Some(value),
             _ => {
                 lazy_static! {
-                    static ref RE_GPG_KEY: Regex = Regex::new(r#"GPGKEY=([^\n]+)\n.*"#).unwrap();
+                    static ref RE_GPG_KEY: Regex = Regex::new(r"GPGKEY=([^\n]+)\n.*").unwrap();
                 }
 
                 match fs::read_to_string(
