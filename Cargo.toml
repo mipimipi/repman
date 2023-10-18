@@ -3,7 +3,7 @@ edition = "2021"
 authors = [ "Michael Picht <mipi@fsfe.org>"]
 license = "GPL-3.0-or-later"
 name = "repman"
-version = "0.6.0"
+version = "0.6.1"
 description = "repman helps to manage custom repositories for Arch Linux packages"
 categories = ["command-line-utilities"]
 
