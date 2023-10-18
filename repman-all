@@ -10,7 +10,7 @@ fi
 if [[ $1 == "-h" || $1 == "--help" || $1 == "help" ]]; then
     cat << EOF
 repman (Custom Repository Management) 
-Copyright (C) 2022 Michael Picht <https://gitlab.com/mipimipi/repman>
+Copyright (C) 2022-2023 Michael Picht <https://gitlab.com/mipimipi/repman>
 
 repman helps to manage custom repositories for Arch Linux packages
 
