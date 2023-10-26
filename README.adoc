@@ -34,7 +34,7 @@ A very important goal of repman is to keep the local system - i.e., the system t
 
 === From https://aur.archlinux.org/[AUR]
 
-There are AUR packages for repman: https://aur.archlinux.org/packages/repman/[repman] and https://aur.archlinux.org/packages/repman-git/[repman-git]. They can be installed with https://wiki.archlinux.org/title/AUR_helpers[AUR helpers] such as https://github.com/Jguer/yay[yay].
+There are AUR packages for repman: https://aur.archlinux.org/packages/repman/[repman] and https://aur.archlinux.org/packages/repman-git/[repman-git]. They can be installed with https://wiki.archlinux.org/title/AUR_helpers[AUR helpers] such as https://github.com/trizen/trizen[trizen].
 
 === Manually from Sources
 
@@ -58,6 +58,10 @@ repman requires information about the repositories, such as name and (remote) pa
 == Usage
 
 Execute `repman help` to get information about how to call repman. repman's link:doc/manpage.adoc[man page] contains comprehensive documentation: `$ man repman`
+
+== Troubeshooting
+
+See the link:doc/manpage.adoc#user-content-troubleshooting-and-faq[troubleshooting chapter] in repman's link:doc/manpage.adoc[man page]. 
 
 == Details
 

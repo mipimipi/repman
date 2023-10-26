@@ -341,6 +341,14 @@ Note: *repman* uses the _gsutil_ (part of _gcloud_) to transfer data between the
 
 == TROUBLESHOOTING AND FAQ
 
+=== When installing repman from AUR with an AUR helper, it complains that dependencies cannot be installed
+
+repman is available for different architectures, and it has different dependencies for such architectures. Thus, repmans PKGBUILD contains declarations for architecture-specific dependencies. Unfortunately, some AUR helpers cannot handle such declarations properly and thus complain about a missing dependency which is irrelevant for the current architecture. To solve this, either use an AUR helper that supports architecture-specific dependencies (such as _trizen_) or download a snapshot of the repman package from AUR and install the package with _makepkg_.
+
+=== repman displays weired error messages
+
+Under the hood, repman uses tools like _makepkg_ or _makechrootpkg_. In case of errors, repman displays the error messages of these tools, and sometimes these messages are not easy to understand. Often, errors are raised by _makepkg_ or _makechrootpkg_ because a dependency is not declared in the PKGBUILD of a package (see below). Please read the error messages carefully and try to figure out if the root cause could be a missing dependency. If that is the case, install it as described below.  
+
 === Adding packages to a remote repository leads to an rsync error
 
 This error can happen, if the remote location is an _SSH_-accessible server and in the PKGBUILD file of the package the _epoch_ is set. In this case, the name of the package contains a colon. If the system that hosts the remote repository does not allow colons in file names, _rsync_ throws an error.
