@@ -1,5 +1,5 @@
 ## Builder stage
-FROM jguer/archlinuxarm as builder
+FROM mkaczanowski/archlinuxarm as builder
 # Create an set up build directory
 RUN mkdir /build
 COPY . /build/
@@ -15,7 +15,7 @@ ENV RUSTUP_HOME="/root/.rustup"
 RUN make
 
 ## Runtime stage
-FROM jguer/archlinuxarm as runtime
+FROM mkaczanowski/archlinuxarm as runtime
 WORKDIR /
 # Copy repman artefacts from builder stage to target location
 ARG PROG=repman
