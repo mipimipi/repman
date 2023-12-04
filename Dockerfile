@@ -1,12 +1,10 @@
 ## Builder stage
-FROM menci/archlinuxarm as builder
+FROM heywoodlh/archlinuxarm as builder
 # Create an set up build directory
 RUN mkdir /build
 COPY . /build/
 WORKDIR /build
 # Install required software and clean package cache afterwards
-RUN pacman-key --init
-RUN pacman-key --populate
 RUN pacman --noconfirm -Syu asciidoctor gcc git make pkg-config rustup
 RUN pacman --noconfirm -Scc
 # Set up rust
@@ -17,7 +15,7 @@ ENV RUSTUP_HOME="/root/.rustup"
 RUN make
 
 ## Runtime stage
-FROM menci/archlinuxarm as runtime
+FROM heywoodlh/archlinuxarm as runtime
 WORKDIR /
 # Copy repman artefacts from builder stage to target location
 ARG PROG=repman
@@ -26,8 +24,6 @@ COPY --from=builder /build/${PROG}-all /usr/bin/${PROG}-all
 COPY --from=builder /build/${PROG}.8 /usr/share/man/man8/${PROG}.8
 COPY --from=builder /build/cfg/${PROG}.conf /etc/${PROG}.conf
 # Install dependencies
-RUN pacman-key --init
-RUN pacman-key --populate
 RUN pacman --noconfirm -Syu fakeroot binutils sudo
 # Configure sudo (sudo is required by the scripts that repman is calling)
 RUN echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
