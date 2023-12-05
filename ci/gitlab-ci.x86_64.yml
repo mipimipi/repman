@@ -13,7 +13,7 @@ build_x86_64:
   before_script:
     - echo -n $DH_ACCESS_TOKEN | docker login -u "$DH_USERNAME" --password-stdin $DH_URL
   script:
-    - docker build -t ${DH_IMAGE}:${ARCH}-latest .
+    - docker build -f ./Dockerfile-x86_64 -t ${DH_IMAGE}:${ARCH}-latest .
     - docker push --all-tags $DH_IMAGE
   after_script:  
     - docker logout $DH_URL
