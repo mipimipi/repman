@@ -15,8 +15,8 @@ stages:
   - build
   - deploy
 
-# General start condition: Execute jobs only for the default branch and if a tag
-# exists  
+# General start condition: Execute jobs only if a tag was created or if the
+# pipeline is started manually  
 .start_condition: &start_condition
   rules:
     - exists:
