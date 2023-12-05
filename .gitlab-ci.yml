@@ -23,6 +23,8 @@ start:
     - exists:
       - $CI_COMMIT_TAG
     - when: manual
+  script:
+    - echo "started pipeline"  
 
 # Build images for different architectures and push them to docker hub
 build_aarch64:
