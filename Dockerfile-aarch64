@@ -4,7 +4,9 @@ FROM heywoodlh/archlinuxarm as builder
 RUN mkdir /build
 COPY . /build/
 WORKDIR /build
-# Disable space check in pacman
+# Disable space check in pacman. That is necessary since the free disk space is
+# not reported properly inside the container (see
+# https://github.com/docker/for-mac/issues/5433)
 RUN sed -i '/CheckSpace/d' /etc/pacman.conf
 # Install required software and clean package cache afterwards
 RUN pacman --noconfirm -Syu asciidoctor gcc git make pkg-config rustup
@@ -25,7 +27,9 @@ COPY --from=builder /build/target/release/${PROG} /usr/bin/${PROG}
 COPY --from=builder /build/${PROG}-all /usr/bin/${PROG}-all
 COPY --from=builder /build/${PROG}.8 /usr/share/man/man8/${PROG}.8
 COPY --from=builder /build/cfg/${PROG}.conf /etc/${PROG}.conf
-# Disable space check in pacman
+# Disable space check in pacman. That is necessary since the free disk space is
+# not reported properly inside the container (see
+# https://github.com/docker/for-mac/issues/5433)
 RUN sed -i '/CheckSpace/d' /etc/pacman.conf
 # Install dependencies
 RUN pacman --noconfirm -Syu fakeroot binutils sudo
