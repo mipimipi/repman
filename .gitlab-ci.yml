@@ -20,6 +20,7 @@ stages:
 .start_condition: &start_condition
   rules:
     - if: ($CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG)
+      when: always
     - when: manual
 
 # Build images for different architectures and push them to docker hub
