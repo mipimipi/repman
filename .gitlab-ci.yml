@@ -19,7 +19,8 @@ stages:
 # exists  
 .start_condition: &start_condition
   rules:
-    - exists: $CI_COMMIT_TAG
+    - exists:
+      - $CI_COMMIT_TAG
     - when: manual
 
 # Build images for different architectures and push them to docker hub
