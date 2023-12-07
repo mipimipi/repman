@@ -20,9 +20,7 @@ stages:
 .start_condition: &start_condition
   rules:
     - if: $CI_COMMIT_TAG
-      when: always
     - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: always
 
 # Build images for different architectures and push them to docker hub
 build_aarch64:
@@ -41,7 +39,6 @@ build_x86_64:
 # Create multi-arch manifest and push it do docker hub
 build_multi-arch:
   stage: deploy
-  needs: ["build_aarch64", "build_x86_64"]  
   image: docker:23.0.3
   services:
     - docker:23.0.3-dind
