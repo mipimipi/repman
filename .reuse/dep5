@@ -6,7 +6,6 @@ Source: gitlab.com/mipimipi/repman
 Files: *.gitignore
        .gitlab-ci.yml
        *.toml
-       Dockerfile
        Makefile
        README.adoc
        CHANGELOG.md
@@ -15,5 +14,6 @@ Files: *.gitignore
        ci/*
        doc/*
        src/*
+       templates/*
 Copyright: 2019-2023 Michael Picht <mipi@fsfe.org>
 License: GPL-3.0-or-later
