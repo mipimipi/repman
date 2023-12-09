@@ -1,6 +1,6 @@
 = repman(8)
 Michael Picht
-Version 
+Version 0.6.2
 :manmanual: REPMAN
 :mansource: REPMAN
 :man-linkstyle: blue R <>

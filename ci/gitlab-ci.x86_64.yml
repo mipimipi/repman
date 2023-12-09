@@ -1,7 +1,7 @@
 # Job to build repman for x86_64. The resulting docker image is pushed to docker
 # hub by the build job
 
-build_x86_64:
+build-x86_64-child:
   stage: build
   image: docker:23.0.3
   services:
@@ -10,10 +10,13 @@ build_x86_64:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: "/certs"
     ARCH: x86_64
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: generate-dockerfiles
   before_script:
     - echo -n $DH_ACCESS_TOKEN | docker login -u "$DH_USERNAME" --password-stdin $DH_URL
   script:
-    - docker build -t ${DH_IMAGE}:${ARCH}-latest .
+    - docker build -f ./Dockerfile-x86_64 -t ${DH_IMAGE}:${ARCH}-latest .
     - docker push --all-tags $DH_IMAGE
   after_script:  
     - docker logout $DH_URL

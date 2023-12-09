@@ -36,8 +36,8 @@ install:
 clean:
 	@rm -f "$(PROG).8"
 
-# (1) Adjust version in Cargo.toml, PKGBUILD and in man documentation to
-#     RELEASE, commit and push changes
+# (1) Adjust version in Cargo.toml and in man documentation to RELEASE, commit
+#     and push changes
 # (2) Create an annotated tag with name RELEASE
 release:
 	@if [ -z $(RELEASE) ]; then \

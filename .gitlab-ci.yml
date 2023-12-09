@@ -9,35 +9,49 @@
 #       runner for the corresponding architecture since a build using emulation
 #       (qemu) does not work. Although images could be built in one go with
 #       docker buildx build -platform=<PLATFORM1>,<PLATFORM2>,... , running
-#       images where emulation was used during build would lead to an error
+#       images where emulation was used during build would lead to a runtime
+#       error
 
-stages:
-  - build
-  - deploy
-
-# General start condition: Execute jobs only for the default branch and if a tag
-# exists  
+# General start condition: Execute jobs only if a tag was created or if the
+# pipeline is started by the scheduler  
 .start_condition: &start_condition
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# Generate Dockerfiles for supported architectures. Since image names can
+# contain '/', '/' cannot be used as separator in the sed statement. Instead,
+# '#' is used.
+generate-dockerfiles:
+  stage: .pre
+  script:
+    - |
+      sed "s#{{BASE_IMAGE}}#${BASE_IMAGE_aarch64}#" templates/Dockerfile > ./Dockerfile-aarch64
+      sed "s#{{BASE_IMAGE}}#${BASE_IMAGE_x86_64}#" templates/Dockerfile > ./Dockerfile-x86_64
+  artifacts:
+    paths:
+      - ./Dockerfile-aarch64
+      - ./Dockerfile-x86_64
 
 # Build images for different architectures and push them to docker hub
-build_aarch64:
+build-aarch64-parent:
   stage: build
   <<: *start_condition  
   trigger:
     include: ci/gitlab-ci.aarch64.yml
     strategy: depend
-build_x86_64:
+  variables:
+    PARENT_PIPELINE_ID: $CI_PIPELINE_ID    
+build-x86_64-parent:
   stage: build
   <<: *start_condition  
   trigger:
     include: ci/gitlab-ci.x86_64.yml
     strategy: depend
+  variables:
+    PARENT_PIPELINE_ID: $CI_PIPELINE_ID    
 
-# Create multi-arch manifest and push it do docker hub
+# Create multi arch manifests and push them do docker hub
 build_multi-arch:
   stage: deploy
   <<: *start_condition  
@@ -50,15 +64,29 @@ build_multi-arch:
     # Login to docker hub
     - echo -n $DH_ACCESS_TOKEN | docker login -u "$DH_USERNAME" --password-stdin $DH_URL
   script:
-    # Create multi arch manifests and push them to docker hub (one with tag
-    # "latest", one with the version as tag)
+    # Create multi arch manifest with tag "latest" and push it to docker hub
     - docker manifest create ${DH_IMAGE}:latest --amend ${DH_IMAGE}:aarch64-latest --amend ${DH_IMAGE}:x86_64-latest
     - docker manifest push --purge ${DH_IMAGE}:latest
-    - docker manifest create ${DH_IMAGE}:${CI_COMMIT_TAG#v} --amend ${DH_IMAGE}:aarch64-latest --amend ${DH_IMAGE}:x86_64-latest
-    - docker manifest push --purge ${DH_IMAGE}:${CI_COMMIT_TAG#v}
-    # Delete architecture-specific tags from docker hub (they are not required
+    # In case the pipeline was started because a new tag was created: Create a
+    # multi arch manifest with a tag for the new release and push it to docker
+    # hub
+    - |  
+      if [[ -n "${CI_COMMIT_TAG}" ]]; then
+        docker manifest create ${DH_IMAGE}:${CI_COMMIT_TAG#v} --amend ${DH_IMAGE}:aarch64-latest --amend ${DH_IMAGE}:x86_64-latest
+        docker manifest push --purge ${DH_IMAGE}:${CI_COMMIT_TAG#v}
+      fi
+    # In case the pipeline was started by the scheduler: Create a multi arch
+    # manifest with a tag for the current date and push it to docker hub
+    - |
+      if [[ "${CI_PIPELINE_SOURCE}" == "schedule" ]]; then
+        d=$(date +%Y%m%d)
+        docker manifest create ${DH_IMAGE}:${d} --amend ${DH_IMAGE}:aarch64-latest --amend ${DH_IMAGE}:x86_64-latest
+        docker manifest push --purge ${DH_IMAGE}:${d}
+      fi
+    # Remove architecture-specific tags from docker hub (they are not required
     # anymore, and it is very unlikely that they were referred to since they
     # were just created by the build jobs)
     - ci/rm_from_docker_hub.sh $DH_USERNAME $DH_PASSWORD $DH_REPO_NAME aarch64-latest x86_64-latest
   after_script:
+    # Logout from docker hub
     - docker logout $DH_URL
