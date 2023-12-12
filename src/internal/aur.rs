@@ -1,4 +1,4 @@
-use crate::internal::cfg;
+use crate::internal::{cfg, common::*};
 use alpm::vercmp;
 use anyhow::{anyhow, Context};
 use arch_msgs::*;
@@ -13,6 +13,9 @@ use std::{
     path::{Path, PathBuf},
     str::from_utf8,
 };
+
+/// Names of optional dependencies
+const PKG_NAME_GIT: &str = "git";
 
 /// AUR URI's
 const AUR_URI: &str = "https://aur.archlinux.org/";
@@ -258,6 +261,15 @@ where
     S: AsRef<str> + Display,
 {
     let err_msg = format!("Cannot clone package '{}' from AUR", pkg_base);
+
+    // Package git must be installed to be able to clone packages from AUR
+    if !is_pkg_installed(PKG_NAME_GIT).with_context(|| err_msg.clone())? {
+        return Err(anyhow!(
+            "Cloning a package from AUR requires package {} being installed",
+            PKG_NAME_GIT
+        ))
+        .context(err_msg);
+    }
 
     msg!("Cloning repository of package {} from AUR ...", pkg_base);
 

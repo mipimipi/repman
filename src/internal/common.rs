@@ -1,14 +1,19 @@
 use anyhow::{anyhow, Context};
+use cached::proc_macro::cached;
 use duct::cmd;
 use once_cell::sync::OnceCell;
 use std::{
     env,
+    error::Error,
     fmt::{self, Display, Formatter},
-    fs,
+    fs, io,
     path::{Path, PathBuf},
     process,
     str::from_utf8,
 };
+
+/// Names of optional dependencies
+const PKG_NAME_GPG: &str = "gnupg";
 
 /// Supported architectures
 #[allow(non_camel_case_types)]
@@ -159,14 +164,8 @@ pub fn is_pkg_installed<S>(pkg_name: S) -> anyhow::Result<bool>
 where
     S: AsRef<str> + Display,
 {
-    Ok(cmd!("pacman", "-Q", pkg_name.as_ref())
-        .stdout_null()
-        .stderr_capture()
-        .unchecked()
-        .run()
-        .with_context(|| format!("Cannot check if package '{}' is installed", pkg_name))?
-        .status
-        .success())
+    pkg_exists(pkg_name.to_string())
+        .with_context(|| format!("Cannot check if package '{}' is installed", pkg_name))
 }
 
 /// Retrieve the process ID from the file `file`
@@ -191,6 +190,15 @@ where
     S: AsRef<str>,
 {
     let err_msg = format!("Cannot sign file '{}'", file.as_ref().to_str().unwrap());
+
+    // GPG package must be installed to sign files
+    if !is_pkg_installed(PKG_NAME_GPG).with_context(|| err_msg.clone())? {
+        return Err(anyhow!(
+            "Signing a package or a repository DB requires package {} being installed",
+            PKG_NAME_GPG
+        ))
+        .context(err_msg);
+    }
 
     if gpg_key.as_ref().is_empty() {
         return Err(anyhow!("GPG key is not set").context(err_msg));
@@ -227,4 +235,41 @@ pub fn tmp_dir() -> anyhow::Result<PathBuf> {
         .with_context(|| "Cannot assemble path of temporary directory")?
         .join(TMP_SUB_PATH)
         .join(format!("{}", process::id())))
+}
+
+/// This private function is called by is_pkg_installed. It is required since
+/// the call of 'pacman -Q <PKG_NAME>' shall be cached due to performance
+/// reasons. But is_pkg_installed cannot by used together with the cached macro
+/// (reason: the macro requires the implementation of the Clone trait, but
+/// is_pkg_installed returns anyhow::Result, and anyhow::Error does not
+/// implement Clone). Thus, a function was needed that returns a custom error
+/// type which implements Clone, PacmanError in this case.
+#[cached]
+fn pkg_exists(pkg_name: String) -> Result<bool, PacmanError> {
+    Ok(cmd!("pacman", "-Q", pkg_name)
+        .stdout_null()
+        .stderr_capture()
+        .unchecked()
+        .run()?
+        .status
+        .success())
+}
+#[derive(Clone, Debug, Default)]
+struct PacmanError {
+    msg: String,
+}
+impl fmt::Display for PacmanError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Error: {}", self.msg)
+    }
+}
+impl Error for PacmanError {}
+/// PacmanError must be created from io:Error since that is the error type
+/// that cmd!(...).run() returns
+impl From<io::Error> for PacmanError {
+    fn from(err: io::Error) -> PacmanError {
+        PacmanError {
+            msg: format!("{}", err),
+        }
+    }
 }

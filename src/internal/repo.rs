@@ -1380,7 +1380,7 @@ impl Repo {
         }
     }
 
-    /// Signs packaage file for packages whose names are contained in `pkg_names`.
+    /// Signs package file for packages whose names are contained in `pkg_names`.
     pub fn sign<S>(&self, pkg_names: Option<&[S]>) -> anyhow::Result<()>
     where
         S: AsRef<str> + Display,
