@@ -1,5 +1,16 @@
 # Changelog
 
+## [Release 0.6.0](https://gitlab.com/mipimipi/repman/tags/v0.7.0) (2023-12-12)
+
+### Added
+
+- Error handling for missing optional dependencies
+
+### Changed
+
+- README converted from Asciidoc to Markdown
+- README enhanced with information about optional dependencies
+
 ## [Release 0.6.0](https://gitlab.com/mipimipi/repman/tags/v0.6.0) (2023-05-01)
 
 ### Added
