@@ -41,7 +41,7 @@ COPY --from=builder /build/cfg/${PROG}.conf /etc/${PROG}.conf
 # 4. Create user to execute repman (repman cannot be executed as root since it
 #    ultimately calls makepkg which cannot be executed as root) 
 RUN sed -i '/CheckSpace/d' /etc/pacman.conf && \
-    pacman --noconfirm -Syu fakeroot binutils sudo  && \
+    pacman --noconfirm -Syu base-devel  && \
     pacman --noconfirm -Scc && \
     echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
     useradd -mU -G sys,wheel ${PROG}_user
