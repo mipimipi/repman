@@ -45,6 +45,9 @@ const PKG_SUB_PATH: &str = "pkg";
 const PKGBUILD_SUB_PATH: &str = "pkgbuild";
 const ADJUST_CHROOT_FILE_NAME: &str = "adjustchroot";
 
+/// Names of optional dependencies
+const PKG_NAME_DISTCC: &str = "distcc";
+
 /// Creates lock file for a repository and registers the removal of such file when
 /// leaving the current scope
 macro_rules! lock {
@@ -505,14 +508,14 @@ impl Repo {
         // case. Background: For some reason, Arch Linux requires distcc being
         // installed even if the build is done in a chroot container and distcc
         // is already installed in that container
-        if distcc && is_pkg_installed("distcc").with_context(|| err_msg)? {
+        if distcc && is_pkg_installed(PKG_NAME_DISTCC).with_context(|| err_msg)? {
             warning!("Package 'distcc' must be installed on the system since otherwise distributed builds are not possible in the chroot");
         }
 
         Ok(())
     }
 
-    /// Returns true is the DB of the current repository exists, false otherwise
+    /// Returns true if the DB of the current repository exists, false otherwise
     fn db_exists(&self) -> bool {
         self.local_dir
             .join(self.db_name.clone() + DB_SUFFIX)
