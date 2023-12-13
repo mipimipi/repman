@@ -32,6 +32,7 @@ const SCHEME_GCS: &str = "gs";
 
 /// Constants for optional dependencies
 const PKG_NAME_RSYNC: &str = "rsync";
+const PKG_NAME_SSH: &str = "openssh";
 const PKG_NAME_S3: &str = "s3cmd";
 const PKG_NAME_GCS: &str = "google-cloud-cli";
 
@@ -53,20 +54,23 @@ pub fn new(url: &Url) -> anyhow::Result<Box<dyn Server>> {
 
 /// Generic code for downloading a repository from a remote location. $cmd must
 /// be of type duct::Expression. It can be created with the macro duct::cmd!() or
-/// the function duct::cmd(), for example
+/// the function duct::cmd(), for example. $pkg_names must be a string array of
+/// packages to are required by the tool that is used for the download.
 macro_rules! download_repo {
-    ($remote_dir:expr, $pkg_name:expr, $cmd:expr) => {
+    ($remote_dir:expr, $pkg_names:expr, $cmd:expr) => {
         let err_msg = "Cannot download repository";
 
-        if !$pkg_name.is_empty() {
-            // Check if required package is installed
-            if !is_pkg_installed($pkg_name).with_context(|| err_msg.clone())? {
-                return Err(anyhow!(
-                    "Downloading a repository from {} requires package {} being installed",
-                    $remote_dir,
-                    $pkg_name
-                ))
-                .context(err_msg);
+        // Check if required packages are installed
+        for pkg_name in $pkg_names {
+            if !pkg_name.is_empty() {
+                if !is_pkg_installed(pkg_name).with_context(|| err_msg.clone())? {
+                    return Err(anyhow!(
+                        "Downloading a repository from {} requires package {} being installed",
+                        $remote_dir,
+                        pkg_name
+                    ))
+                    .context(err_msg);
+                }
             }
         }
 
@@ -93,20 +97,23 @@ macro_rules! download_repo {
 
 /// Generic code for uploading a repository to a remote location. $cmd must be of
 /// type duct::Expression. It can be created with the macro duct::cmd!() or the
-/// function duct::cmd(), for example
+/// function duct::cmd(), for example. $pkg_names must be a string array of
+/// packages to are required by the tool that is used for the upload.
 macro_rules! upload_repo {
-    ($remote_dir:expr, $pkg_name:expr, $cmd:expr) => {
+    ($remote_dir:expr, $pkg_names:expr, $cmd:expr) => {
         let err_msg = "Cannot upload repository";
 
-        if !$pkg_name.is_empty() {
-            // Check if required package is installed
-            if !is_pkg_installed($pkg_name).with_context(|| err_msg.clone())? {
-                return Err(anyhow!(
-                    "Uploading a repository to {} requires package {} being installed",
-                    $remote_dir,
-                    $pkg_name
-                ))
-                .context(err_msg);
+        // Check if required packages are installed
+        for pkg_name in $pkg_names {
+            if !pkg_name.is_empty() {
+                if !is_pkg_installed(pkg_name).with_context(|| err_msg.clone())? {
+                    return Err(anyhow!(
+                        "Uploading a repository to {} requires package {} being installed",
+                        $remote_dir,
+                        pkg_name
+                    ))
+                    .context(err_msg);
+                }
             }
         }
 
@@ -159,7 +166,7 @@ impl Server for Rsync {
     fn download_repo(&self, local_dir: &Path) -> anyhow::Result<()> {
         download_repo!(
             self.ssh_dir,
-            PKG_NAME_RSYNC,
+            [PKG_NAME_RSYNC, PKG_NAME_SSH],
             cmd!(
                 "rsync",
                 "-a",
@@ -174,7 +181,7 @@ impl Server for Rsync {
     fn upload_repo(&self, local_dir: &Path) -> anyhow::Result<()> {
         upload_repo!(
             self.ssh_dir,
-            PKG_NAME_RSYNC,
+            [PKG_NAME_RSYNC, PKG_NAME_SSH],
             cmd!(
                 "rsync",
                 "-a",
@@ -204,7 +211,7 @@ impl Server for S3 {
     fn download_repo(&self, local_dir: &Path) -> anyhow::Result<()> {
         download_repo!(
             self.url,
-            PKG_NAME_S3,
+            [PKG_NAME_S3],
             cmd!(
                 "s3cmd",
                 "sync",
@@ -218,7 +225,7 @@ impl Server for S3 {
     fn upload_repo(&self, local_dir: &Path) -> anyhow::Result<()> {
         upload_repo!(
             self.url,
-            PKG_NAME_S3,
+            [PKG_NAME_S3],
             cmd!(
                 "s3cmd",
                 "sync",
@@ -249,7 +256,7 @@ impl Server for Gcs {
     fn download_repo(&self, local_dir: &Path) -> anyhow::Result<()> {
         download_repo!(
             self.url,
-            PKG_NAME_GCS,
+            [PKG_NAME_GCS],
             cmd!(
                 "gsutil",
                 "-m",
@@ -266,7 +273,7 @@ impl Server for Gcs {
     fn upload_repo(&self, local_dir: &Path) -> anyhow::Result<()> {
         upload_repo!(
             self.url,
-            PKG_NAME_GCS,
+            [PKG_NAME_GCS],
             cmd!(
                 "gsutil",
                 "-m",

@@ -55,14 +55,15 @@ There are [Docker images](https://hub.docker.com/repository/docker/mipimipi/repm
 
 ## Optional dependencies
 
-Depending on what repman is used for, some additional dependencies are required:
+Depending on what repman is used for and how, some additional dependencies are required:
 
 - To handle packages from AUR, [git](https://wiki.archlinux.org/title/Git) is required
 - To sign packages or repository databases, [GnuPG](https://wiki.archlinux.org/title/GnuPG) is required
 - To manage remote repositories, depending on the type of the server/the access to the server specific tools are required:
-    - Access via SSH requires [rsync](https://wiki.archlinux.org/title/Rsync)
+    - Access via SSH requires [rsync](https://wiki.archlinux.org/title/Rsync) and [OpenSSH](https://wiki.archlinux.org/title/OpenSSH)
     - AWS S3 requires s3cmd (for [x86_64](https://archlinux.org/packages/extra/any/s3cmd/), for [AArch64](https://archlinuxarm.org/packages/any/s3cmd))
     - Google Cloud Storage requires [google-cloud-cli](https://aur.archlinux.org/packages/google-cloud-cli)
+- In case distributed builds are used, [distcc](https://wiki.archlinux.org/title/Distcc) is required	
 
 # Configuration
 
