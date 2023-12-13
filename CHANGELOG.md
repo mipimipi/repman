@@ -1,6 +1,6 @@
 # Changelog
 
-## [Release 0.6.0](https://gitlab.com/mipimipi/repman/tags/v0.7.0) (2023-12-12)
+## [Release 0.7.0](https://gitlab.com/mipimipi/repman/tags/v0.7.0) (2023-12-12)
 
 ### Added
 

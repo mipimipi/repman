@@ -1,4 +1,6 @@
-![](https://api.reuse.software/badge/gitlab.com/mipimipi/repman)
+# Repman
+
+[![REUSE status](https://api.reuse.software/badge/gitlab.com/mipimipi/repman)](https://api.reuse.software/info/gitlab.com/mipimipi/repman)
 
 [Custom repositories](https://wiki.archlinux.org/index.php/Pacman/Tips_and_tricks#Custom_local_repository) are personal [Arch Linux](https://www.archlinux.org/) repositories thatcan contain packages from the Arch Linux user epository, [AUR](https://aur.archlinux.org/), or other packages (local packages, for example, where the [PKGBUILD file](https://wiki.archlinux.org/index.php/PKGBUILD) is stored in the local file system). repman (**REP**ository **MAN**ager) helps to manage them, whether they are local (i.e., stored in your local file system) or remote.
 
