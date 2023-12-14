@@ -7,7 +7,7 @@ Files: *.gitignore
        .gitlab-ci.yml
        *.toml
        Makefile
-       README.adoc
+       README.md
        CHANGELOG.md
        repman-all
        cfg/*
