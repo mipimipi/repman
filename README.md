@@ -2,7 +2,7 @@
 
 # Repman
 
-[Custom repositories](https://wiki.archlinux.org/index.php/Pacman/Tips_and_tricks#Custom_local_repository) are personal [Arch Linux](https://www.archlinux.org/) repositories thatcan contain packages from the Arch Linux user epository, [AUR](https://aur.archlinux.org/), or other packages (local packages, for example, where the [PKGBUILD file](https://wiki.archlinux.org/index.php/PKGBUILD) is stored in the local file system). repman (**REP**ository **MAN**ager) helps to manage them, whether they are local (i.e., stored in your local file system) or remote.
+[Custom repositories](https://wiki.archlinux.org/index.php/Pacman/Tips_and_tricks#Custom_local_repository) are personal [Arch Linux](https://www.archlinux.org/) repositories that can contain packages from the Arch Linux user repository ([AUR](https://aur.archlinux.org/)) or other packages (local packages, for example, where the [PKGBUILD file](https://wiki.archlinux.org/index.php/PKGBUILD) is stored in the local file system). repman (**REP**ository **MAN**ager) helps to manage them, whether they are local or remote.
 
 repman replaces [crema](https://gitlab.com/mipimipi/crema) which is no longer under development and adds new features. It can run on
 x86_64/AMD64 and AArch64/ARM64 and thus can manage repositories for these architectures.
@@ -19,7 +19,7 @@ Some use cases for custom repositories:
 repman supports different storage locations for repositories (check [Optional dependencies](#optional-dependencies)):
 
 - Local file system
-- Remote servers with accessible via SSH
+- Remote servers which are accessible via SSH
 - [AWS S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html)
 - [Google Cloud Storage](https://cloud.google.com/storage)
 
@@ -49,7 +49,7 @@ Another option is a manual installation. For this execute:
 
 ## Docker
 
-There are [Docker images](https://hub.docker.com/repository/docker/mipimipi/repman) for x86_64 and AArch64 based on Arch Linux containing repman. These images can be used in CI pipelines, for example. To download the latest image execute:
+There are [Docker images](https://hub.docker.com/repository/docker/mipimipi/repman) for x86_64 and AArch64 architectures that contain repman. These images can be used in CI pipelines, for example. To download the latest image execute:
 
     $ docker pull mipimipi/repman:latest
 
@@ -59,7 +59,7 @@ Depending on what repman is used for and how, some additional dependencies are r
 
 - To handle packages from AUR, [git](https://wiki.archlinux.org/title/Git) is required
 - To sign packages or repository databases, [GnuPG](https://wiki.archlinux.org/title/GnuPG) is required
-- To manage remote repositories, depending on the type of the server/the access to the server specific tools are required:
+- To manage remote repositories, depending on the type of the server/the access to the server, specific tools are required:
     - Access via SSH requires [rsync](https://wiki.archlinux.org/title/Rsync) and [OpenSSH](https://wiki.archlinux.org/title/OpenSSH)
     - AWS S3 requires s3cmd (for [x86_64](https://archlinux.org/packages/extra/any/s3cmd/), for [AArch64](https://archlinuxarm.org/packages/any/s3cmd))
     - Google Cloud Storage requires [google-cloud-cli](https://aur.archlinux.org/packages/google-cloud-cli)
