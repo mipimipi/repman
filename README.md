@@ -10,7 +10,7 @@ x86_64/AMD64 and AArch64/ARM64 and thus can manage repositories for these archit
 Some use cases for custom repositories:
 
 - During the installation of Arch Linux you want to pacstrap AUR packages. Therefore, these packages must be provided by a repository.
-- You want to use self-defined [meta packages](https://nerdstuff.org/posts/2020/2020-002_meta_packages/) to make Arch Linux installation more efficient
+- You want to use self-defined [meta packages](https://nerdstuff.org/posts/2020/2020-002_meta_packages/) to make an Arch Linux installation more efficient
 - You want to deploy your packages to a repository automatically as part of a CI/CD pipeline
 - You are running Arch Linux on multiple machines in your local network and want to provide all of them with packages / package updates from a custom repository in your local network
 
