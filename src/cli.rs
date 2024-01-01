@@ -1,4 +1,4 @@
-//! Definition of the command line interface of repman
+#![doc = r"Definition of the command line interface of repman"]
 
 use clap::{Parser, Subcommand};
 use indoc::indoc;

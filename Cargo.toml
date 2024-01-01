@@ -1,11 +1,15 @@
 [package]
-edition = "2021"
-authors = [ "Michael Picht <mipi@fsfe.org>"]
-license = "GPL-3.0-or-later"
 name = "repman"
 version = "0.7.2"
+authors = [ "Michael Picht <mipi@fsfe.org>"]
+license = "GPL-3.0-or-later"
 description = "repman helps to manage custom repositories for Arch Linux packages"
+readme = "README.md"
+homepage = "https://gitlab.com/mipimipi/repman"
+repository = "https://gitlab.com/mipimipi/repman"
+keywords = ["cli", "archlinux", "aur-helper", "repository-mgmt", "arch-linux"]
 categories = ["command-line-utilities"]
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
