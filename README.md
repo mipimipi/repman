@@ -1,4 +1,5 @@
 [![REUSE status](https://api.reuse.software/badge/gitlab.com/mipimipi/repman)](https://api.reuse.software/info/gitlab.com/mipimipi/repman)
+[![Crates.io](https://img.shields.io/crates/v/repman.svg)](https://crates.io/crates/repman)
 
 # Repman
 
