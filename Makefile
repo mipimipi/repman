@@ -1,7 +1,5 @@
 PROG=repman
 
-SHELL=/usr/bin/bash
-
 # Set project VERSION to last tag name. If no tag exists, set it to v0.0.0
 $(eval TAGS=$(shell git rev-list --tags))
 ifdef TAGS
