@@ -37,7 +37,7 @@ A very important goal of repman is to keep the local system - i.e., the system t
 
 ## From [AUR](https://aur.archlinux.org/)
 
-There are AUR packages for repman: [repman](https://aur.archlinux.org/packages/repman/) and [repman-git](https://aur.archlinux.org/packages/repman-git/). They can be installed with [AUR helpers](https://wiki.archlinux.org/title/AUR_helpers) such as [trizen](https://github.com/trizen/trizen).
+There are AUR packages for repman: [repman](https://aur.archlinux.org/packages/repman/) and [repman-git](https://aur.archlinux.org/packages/repman-git/). They can be installed with [AUR helpers](https://wiki.archlinux.org/title/AUR_helpers) such as [trizen](https://github.com/trizen/trizen). These packages are available as binaries via the [nerdstuff repository](https://nerdstuff.org/repository/).
 
 ## Manually from Sources
 
