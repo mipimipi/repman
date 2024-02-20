@@ -60,13 +60,13 @@ impl Pkg {
     /// packages can be built (in case of [split packages](https://man.archlinux.org/man/PKGBUILD.5#PACKAGE_SPLITTING))
     /// Packages are either built via makechrootpkg or makepkg, depending on
     /// `no_chroot`.
-    /// After being built, package files are first stord in `pkg_dir`. Finally,
+    /// After being built, package files are first stored in `pkg_dir`. Finally,
     /// they are moved to the repository directory `repo_dir`.
     /// If `sign` is `Some(...)`, package files are signed (`Some(true)`) or not
     /// (`Some(false)`). If `sign` is `None`, package files are only signed if
     /// there is a package file of an package version in `repo_dir` that is
     /// signed
-    /// Function returns a vector of Pkg instance correswpo0nding to the packages
+    /// Function returns a vector of Pkg instance corresponding to the packages
     /// that were built
     pub fn build<P, S>(
         pkgbuild: &PkgBuild,
