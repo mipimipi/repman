@@ -42,7 +42,7 @@ COPY --from=builder /build/cfg/${PROG}.conf /etc/${PROG}.conf
 # 4. Configure sudo (sudo is required by the scripts that repman is calling)
 # 5. Create user to execute repman (repman cannot be executed as root since it
 #    ultimately calls makepkg which cannot be executed as root) 
-RUN sed -i '"s/ debug/ \!debug/g;s/(debug/(\!debug/g'  /etc/makepkg.conf
+RUN sed -i '"s/ debug/ \!debug/g;s/(debug/(\!debug/g'  /etc/makepkg.conf && \
     sed -i '/CheckSpace/d' /etc/pacman.conf && \
     pacman --noconfirm -Syu base-devel  && \
     pacman --noconfirm -Scc && \
