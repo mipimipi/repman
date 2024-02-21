@@ -5,7 +5,7 @@
 
 ## Builder stage
 FROM {{BASE_IMAGE}} as builder
-# Create an set up build directory
+# Create and set up build directory
 RUN mkdir /build
 COPY . /build/
 WORKDIR /build
@@ -33,14 +33,17 @@ COPY --from=builder /build/target/release/${PROG} /usr/bin/${PROG}
 COPY --from=builder /build/${PROG}-all /usr/bin/${PROG}-all
 COPY --from=builder /build/${PROG}.8 /usr/share/man/man8/${PROG}.8
 COPY --from=builder /build/cfg/${PROG}.conf /etc/${PROG}.conf
-# 1. Disable space check in pacman. This is necessary since the free disk space
+# 1. Switch off debug option in makepkg.conf since this leads to building
+#    ...-debug packages (which is not wanted)
+# 2. Disable space check in pacman. This is necessary since the free disk space
 #    might not reported properly inside the container. In that case, pacman
 #    could stop with an error (see https://github.com/docker/for-mac/issues/5433)
-# 2. Install dependencies and clean package cache afterwards
-# 3. Configure sudo (sudo is required by the scripts that repman is calling)
-# 4. Create user to execute repman (repman cannot be executed as root since it
+# 3. Install dependencies and clean package cache afterwards
+# 4. Configure sudo (sudo is required by the scripts that repman is calling)
+# 5. Create user to execute repman (repman cannot be executed as root since it
 #    ultimately calls makepkg which cannot be executed as root) 
-RUN sed -i '/CheckSpace/d' /etc/pacman.conf && \
+RUN sed -i '"s/ debug/ \!debug/g;s/(debug/(\!debug/g'  /etc/makepkg.conf
+    sed -i '/CheckSpace/d' /etc/pacman.conf && \
     pacman --noconfirm -Syu base-devel  && \
     pacman --noconfirm -Scc && \
     echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \

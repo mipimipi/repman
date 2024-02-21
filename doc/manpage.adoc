@@ -345,6 +345,24 @@ Note: *repman* uses the _gsutil_ (part of _gcloud_) to transfer data between the
 
 repman is available for different architectures, and it has different dependencies for such architectures. Thus, repmans PKGBUILD contains declarations for architecture-specific dependencies. Unfortunately, some AUR helpers cannot handle such declarations properly and thus complain about a missing dependency which is irrelevant for the current architecture. To solve this, either use an AUR helper that supports architecture-specific dependencies (such as _trizen_) or download a snapshot of the repman package from AUR and install the package with _makepkg_.
 
+=== repman cannot add `...-debug` packages to a repository
+
+When building a package (via `repman add` or `repman update`), the error message
+
+    ==> ERROR: Package "<{SOME_PATH}.cache/repman/tmp/{SOME_PID}/pkg/{PACKAGE_NAME}-debug-<...>.pkg.tar.zst" was not built and thus not added to the repository
+
+is displayed.
+
+Reason is that because of the configuration of _makepkg_, in a addition to a 'regular' package, a corresponding package with debugging information (package name: `<NAME_OF_REGULAR PACKAGE>-debug`) is supposed to be built, but this package was not built for some reason.
+
+In order to avoid such error messages, adjust the `makepkg.conf` file that is used for building packages (`/etc/makepkg.conf`, for example - or a corresponding file that is either specific to *repman* or a repository - see the *FILES AND DIRECTORIES* chapter). In that file, replace the option `debug` by `!debug`. After that, the system will no longer try building such debugging packages. For further information, see `https://man.archlinux.org/man/makepkg.conf.5.en.html`.
+
+If that is an AUR package, you should inform the package maintainer. Maybe the PKGBUILD file must be adjusted.
+
+=== repman adds packages of name {PACKAGE_NAME}-debug to a repository
+
+See the topic above. Such packages are created because of the configuration in `makepkg.conf`. Adjust it as described above.
+
 === repman displays weired error messages
 
 Under the hood, repman uses tools like _makepkg_ or _makechrootpkg_. In case of errors, repman displays the error messages of these tools, and sometimes these messages are not easy to understand. Often, errors are raised by _makepkg_ or _makechrootpkg_ because a dependency is not declared in the PKGBUILD of a package (see below). Please read the error messages carefully and try to figure out if the root cause could be a missing dependency. If that is the case, install it as described below.  

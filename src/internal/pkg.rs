@@ -126,52 +126,69 @@ impl Pkg {
             // --packagelist. Thus, the new file name is retrieved in a rather
             // complex way via glob with a wildcard replacing the version:
             // .../NAME-*-PKGREL-ARCH.pkg.tar.zst
-            let mut pkg =
-                Pkg::from_file_ignore_version(&pkg_file).with_context(|| err_msg.clone())?;
-
-            // Package file must either be signed if the sign parameter of this
-            // function is Some(true), which might be the case if new packages
-            // are added to the repository, or if there is an old package version
-            // that was signed (which might be the case if packages are updated).
-            // Since files of old package versions might have to be examined,
-            // this block must be executed before old files are deleted
-            let to_be_signed = match sign {
-                Some(to_be_signed) => to_be_signed,
-                None => {
-                    // Check if a signed package file of an older package version
-                    // exists in the repository directory
-                    file_exists_for_pattern(
-                        (pattern_ignore_version(
-                            &pkg_file,
-                            Some(&repo_dir.as_ref().to_path_buf()),
-                        )?
-                        .clone()
-                            + SIG_SUFFIX)
-                            .as_str(),
-                    )
+            match Pkg::from_file_ignore_version(&pkg_file) {
+                Err(_) => {
+                    // If a package that was supposed to be built was not built:
+                    // Just print an error message but continue with the packages
+                    // that were built.
+                    // Background: If in the makepkg options the option "debug"
+                    // is set, the package list might contain a package of name
+                    // "...-debug" which might not be built in some cases causing
+                    // this error.
+                    error!(
+                        "Package \"{}\" was not built and thus not added to the repository",
+                        pkg_file.as_path().display()
+                    );
+                    continue;
                 }
-            };
+                Ok(mut pkg) => {
+                    // Package file must either be signed if the sign parameter
+                    // of this function is Some(true), which might be the case if
+                    // new packages are added to the repository, or if there is
+                    // an old package version that was signed (which might be the
+                    // case if packages are updated).
+                    // Since files of old package versions might have to be
+                    // examined, this block must be executed before old files are
+                    // deleted
+                    let to_be_signed = match sign {
+                        Some(to_be_signed) => to_be_signed,
+                        None => {
+                            // Check if a signed package file of an older package
+                            // version exists in the repository directory
+                            file_exists_for_pattern(
+                                (pattern_ignore_version(
+                                    &pkg_file,
+                                    Some(&repo_dir.as_ref().to_path_buf()),
+                                )?
+                                .clone()
+                                    + SIG_SUFFIX)
+                                    .as_str(),
+                            )
+                        }
+                    };
 
-            // Remove old package files from repository directory
-            // NOTE: This call must happen before the new package file is
-            // moved to the repository directory, since otherwise the new
-            // file would be removed as well
-            pkg.remove_from_dir(repo_dir)
-                .with_context(|| err_msg.clone())?;
+                    // Remove old package files from repository directory
+                    // NOTE: This call must happen before the new package file is
+                    // moved to the repository directory, since otherwise the new
+                    // file would be removed as well
+                    pkg.remove_from_dir(repo_dir)
+                        .with_context(|| err_msg.clone())?;
 
-            // Move new package file to repository directory
-            pkg.move_to_dir(repo_dir).with_context(|| err_msg.clone())?;
+                    // Move new package file to repository directory
+                    pkg.move_to_dir(repo_dir).with_context(|| err_msg.clone())?;
 
-            // Sign package file if required
-            if to_be_signed {
-                if gpg_key.as_ref().is_none() {
-                    return Err(anyhow!("GPG_KEY is not set").context(err_msg));
+                    // Sign package file if required
+                    if to_be_signed {
+                        if gpg_key.as_ref().is_none() {
+                            return Err(anyhow!("GPG_KEY is not set").context(err_msg));
+                        }
+                        pkg.sign(gpg_key.as_ref().unwrap())
+                            .with_context(|| err_msg.clone())?;
+                    }
+
+                    pkgs.push(pkg);
                 }
-                pkg.sign(gpg_key.as_ref().unwrap())
-                    .with_context(|| err_msg.clone())?;
             }
-
-            pkgs.push(pkg);
         }
 
         Ok(pkgs)
