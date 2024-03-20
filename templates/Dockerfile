@@ -42,11 +42,14 @@ COPY --from=builder /build/cfg/${PROG}.conf /etc/${PROG}.conf
 # 4. Configure sudo (sudo is required by the scripts that repman is calling)
 # 5. Create user to execute repman (repman cannot be executed as root since it
 #    ultimately calls makepkg which cannot be executed as root)
+# 6. Workaround to avoid problems with alpm.rs. It should be removed when
+#    repman moves to alpm.rs 3.x
 RUN sed -i 's/ debug/ \!debug/g;s/(debug/(\!debug/g'  /etc/makepkg.conf && \
     sed -i '/CheckSpace/d' /etc/pacman.conf && \
     pacman --noconfirm -Syu base-devel  && \
     pacman --noconfirm -Scc && \
     echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
-    useradd -mU -G sys,wheel ${PROG}_user
+    useradd -mU -G sys,wheel ${PROG}_user && \
+    ln -s /usr/lib/libalpm.so /usr/lib/libalpm.so.13
 WORKDIR /
 CMD ["repman", "-V"]

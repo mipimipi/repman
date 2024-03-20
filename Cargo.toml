@@ -14,7 +14,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-alpm = "3"
+alpm = "2"
 anyhow = "1"
 arch_msgs = "0.2"
 cached = "0.49"
