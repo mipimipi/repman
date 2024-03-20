@@ -16,11 +16,14 @@ ENV RUSTUP_HOME="/root/.rustup"
 #    might not reported properly inside the container. In that case, pacman
 #    could stop with an error (see https://github.com/docker/for-mac/issues/5433)
 # 2. Install required software and clean package cache afterwards
-# 3. Set up rust
-# 4. Build repman
+# 3. Workaround to avoid problems with alpm.rs. It should be removed when
+#    repman moves to alpm.rs 3.x
+# 4. Set up rust
+# 5. Build repman
 RUN sed -i '/CheckSpace/d' /etc/pacman.conf && \
     pacman --noconfirm -Syu asciidoctor gcc git make pkg-config rustup && \
     pacman --noconfirm -Scc && \
+    ln -s /usr/lib/libalpm.so /usr/lib/libalpm.so.13 && \
     rustup install --profile minimal stable && \
     make
 
