@@ -15,15 +15,14 @@ ENV RUSTUP_HOME="/root/.rustup"
 # 1. Disable space check in pacman. This is necessary since the free disk space
 #    might not reported properly inside the container. In that case, pacman
 #    could stop with an error (see https://github.com/docker/for-mac/issues/5433)
-# 2. Install required software and clean package cache afterwards
-# 3. Workaround to avoid problems with alpm.rs. It should be removed when
-#    repman moves to alpm.rs 3.x
-# 4. Set up rust
-# 5. Build repman
+# 2. Install required software (clang is only required because of this
+#    workaround: https://github.com/archlinux/alpm.rs/issues/35) and clean
+#    package cache afterwards
+# 3. Set up rust
+# 4. Build repman
 RUN sed -i '/CheckSpace/d' /etc/pacman.conf && \
-    pacman --noconfirm -Syu asciidoctor gcc git make pkg-config rustup && \
+    pacman --noconfirm -Syu asciidoctor clang gcc git make pkg-config rustup && \
     pacman --noconfirm -Scc && \
-    ln -s /usr/lib/libalpm.so /usr/lib/libalpm.so.13 && \
     rustup install --profile minimal stable && \
     make
 
@@ -45,14 +44,11 @@ COPY --from=builder /build/cfg/${PROG}.conf /etc/${PROG}.conf
 # 4. Configure sudo (sudo is required by the scripts that repman is calling)
 # 5. Create user to execute repman (repman cannot be executed as root since it
 #    ultimately calls makepkg which cannot be executed as root)
-# 6. Workaround to avoid problems with alpm.rs. It should be removed when
-#    repman moves to alpm.rs 3.x
 RUN sed -i 's/ debug/ \!debug/g;s/(debug/(\!debug/g'  /etc/makepkg.conf && \
     sed -i '/CheckSpace/d' /etc/pacman.conf && \
     pacman --noconfirm -Syu base-devel  && \
     pacman --noconfirm -Scc && \
     echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
-    useradd -mU -G sys,wheel ${PROG}_user && \
-    ln -s /usr/lib/libalpm.so /usr/lib/libalpm.so.13
+    useradd -mU -G sys,wheel ${PROG}_user
 WORKDIR /
 CMD ["repman", "-V"]
