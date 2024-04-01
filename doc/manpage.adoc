@@ -363,7 +363,7 @@ If that is an AUR package, you should inform the package maintainer. Maybe the P
 
 See the topic above. Such packages are created because of the configuration in `makepkg.conf`. Adjust it as described above.
 
-=== repman displays weired error messages
+=== repman displays weird error messages
 
 Under the hood, repman uses tools like _makepkg_ or _makechrootpkg_. In case of errors, repman displays the error messages of these tools, and sometimes these messages are not easy to understand. Often, errors are raised by _makepkg_ or _makechrootpkg_ because a dependency is not declared in the PKGBUILD of a package (see below). Please read the error messages carefully and try to figure out if the root cause could be a missing dependency. If that is the case, install it as described below.  
 
