@@ -101,7 +101,7 @@ Distributed builds in chroot containers can either be enabled before a container
 
 To enable it before a chroot container is created, execute the following steps:
 
-1. Enable and configure [distcc(https://wiki.archlinux.org/title/Distcc) in the `makepkg.conf` file that is used for the chroot container (see the `mkchroot` command and the distcc documentation in the [Arch Linux Wiki](https://wiki.archlinux.org/title/Distcc) or the [Arch Linux ARM Wiki](https://archlinuxarm.org/wiki/Distributed_Compiling).
+1. Enable and configure distcc in the `makepkg.conf` file that is used for the chroot container (see the mkchroot command and the [distcc documentation in the Arch Linux Wiki](https://wiki.archlinux.org/title/Distcc) or the [Arch Linux ARM Wiki](https://archlinuxarm.org/wiki/Distributed_Compiling).
 
 2. Install distcc on your system:
     
