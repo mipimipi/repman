@@ -222,6 +222,7 @@ impl AurData {
     /// - version currently available in AUR (which is of course greater than their
     ///   other version)
     /// - package base
+    ///
     /// Package base is required to be able to clone the package repository lateron
     pub fn pkg_updates<'a>(
         &'a self,

@@ -306,6 +306,7 @@ impl Repo {
     /// repman config directory):
     /// 1) ~/.config/repman/adjustchroot-<REPOSITORY-NAME>
     /// 2) ~/.config/repman/adjustchroot
+    ///
     /// The script must be executable
     fn adjust_chroot(&self) -> anyhow::Result<Option<PathBuf>> {
         let config_dir = config_dir().with_context(|| {
@@ -820,6 +821,7 @@ impl Repo {
     /// 1) ~/.config/repman/makepkg-<REPOSITORY-NAME>.conf
     /// 2) ~/.config/repman/makepkg.conf
     /// 3) /etc/makepkg.conf
+    ///
     /// The determination is only donw once. The result is stored in a static variable
     fn makepkg_conf(&self) -> anyhow::Result<&'static Path> {
         static MAKEPKG_CONF: OnceCell<PathBuf> = OnceCell::new();
@@ -856,6 +858,7 @@ impl Repo {
     /// 1) ~/.config/repman/pacman-<REPOSITORY-NAME>.conf
     /// 2) ~/.config/repman/pacman.conf
     /// 3) /etc/pacman.conf
+    ///
     /// The determination is only donw once. The result is stored in a static variable
     fn pacman_conf(&self) -> anyhow::Result<&'static Path> {
         static PACMAN_CONF: OnceCell<PathBuf> = OnceCell::new();
