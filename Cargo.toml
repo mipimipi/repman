@@ -14,12 +14,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-alpm = { version = "3", features = [
-    "generate",
-] } # Workaround (see https://github.com/archlinux/alpm.rs/issues/35, requires clang)
+alpm = { version = "4" }
 anyhow = "1"
 arch_msgs = "0.2"
-cached = "0.51"
+cached = "0.53"
 clap = { version = "4", features = ["derive"] }
 const_format = "0.2"
 dialoguer = "0.11"
