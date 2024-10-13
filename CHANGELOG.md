@@ -1,5 +1,11 @@
 # Changelog
 
+## [Release 0.7.11](https://gitlab.com/mipimipi/repman/tags/v0.7.11) (2024-10-13)
+
+### Changed
+
+- Corrected cleanup: In the past, package files that contain a package version that is older than the version contained in the repo DB were not removed by cleanup. Now, cleanup removes such files.
+
 ## [Release 0.7.0](https://gitlab.com/mipimipi/repman/tags/v0.7.0) (2023-12-12)
 
 ### Added

@@ -1,6 +1,6 @@
 = repman(8)
 Michael Picht
-Version 0.7.10
+Version 0.7.11
 :manmanual: REPMAN
 :mansource: REPMAN
 :man-linkstyle: blue R <>
@@ -277,4 +277,4 @@ This directory contains temporary data that is only created and used during one 
 == COPYRIGHT
 
 Copyright \(C) 2019-2024, Michael Picht <mipi@fsfe.org>.  Licensed under the GNU General Public License version 3 or later, see https://gnu.org/licenses/gpl.html
-Version 0.7.10
+Version 0.7.11
