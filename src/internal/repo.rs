@@ -65,9 +65,9 @@ macro_rules! lock {
 /// the code block is executed directly on the repository data with copying it
 macro_rules! exec_on_repo {
     ($self:ident, $code:block) => {
-        $self.download()?;
+                $self.download()?;
         $code
-        $self.upload()?;
+                $self.upload()?;
     };
 }
 
@@ -346,7 +346,7 @@ impl Repo {
             // -> Remove packages from the DB where that is not the case
             {
                 let mut to_be_deleted_pkg_names: Vec<&str> = vec![];
-                for db_pkg in db_pkgs.values() {
+                for db_pkg in db_pkgs.packages() {
                     if Pkg::from_meta_data(
                         &db_pkg.name,
                         &db_pkg.version,
@@ -381,7 +381,15 @@ impl Repo {
                 {
                     if file.is_file() {
                         if let Ok(pkg) = Pkg::try_from(file.clone()) {
-                            if !db_pkgs.contains_key(&pkg.name()) {
+                            // Package file must be removed if ...
+                            // (a) the repository DB does not contain a package
+                            //     of that name, or ...
+                            // (b) it contains a package of that name, but this
+                            //     has a version which is different from the
+                            //     packages stored in the file
+                            if !db_pkgs.contains(&pkg.name())
+                                || (pkg.version() != db_pkgs.get(&pkg.name()).unwrap().version)
+                            {
                                 if let Err(err) = fs::remove_file(&file) {
                                     error!(
                                         "{:?}",
@@ -444,7 +452,7 @@ impl Repo {
                     &self.name, pkg_name
                 )
             })?
-            .contains_key(pkg_name.as_ref()))
+            .contains(pkg_name.as_ref()))
     }
 
     /// Creates a chroot container for the current repository. The chroot is
@@ -525,8 +533,8 @@ impl Repo {
 
     /// Retrieves content from the DB of the current repository. This is only done
     /// once. The result is stored in a static variable
-    fn db_pkgs(&self) -> anyhow::Result<&'static repodb_parser::PkgMap> {
-        static DB_PKGS: OnceCell<repodb_parser::PkgMap> = OnceCell::new();
+    fn db_pkgs(&self) -> anyhow::Result<&'static repodb_parser::Pkgs> {
+        static DB_PKGS: OnceCell<repodb_parser::Pkgs> = OnceCell::new();
         DB_PKGS.get_or_try_init(|| {
             if !self.db_exists() {
                 return Err(anyhow!("DB of repository {} does not exist", &self.name));
@@ -729,7 +737,7 @@ impl Repo {
                 // Determine max length of all package name and all architecture
                 // strings
                 let (max_name_len, max_arch_len) = db_pkgs
-                    .values()
+                    .packages()
                     .map(|db_pkg| (db_pkg.name.len(), db_pkg.arch.len()))
                     .fold((0, 0), |(x, y), (max_x, max_y)| {
                         (usize::max(x, max_x), usize::max(y, max_y))
@@ -741,7 +749,7 @@ impl Repo {
                     &self.name
                 );
 
-                for db_pkg in db_pkgs.values() {
+                for db_pkg in db_pkgs.packages() {
                     println!(
                         "{0}{1} {2: <3$} {4: <5$} {6}",
                         if self.pkg(&db_pkg.name)?.is_signed() {
@@ -1561,7 +1569,7 @@ impl Repo {
                 }
             }
             None => {
-                for pkg_name in self.db_pkgs().with_context(|| err_msg)?.keys() {
+                for pkg_name in self.db_pkgs().with_context(|| err_msg)?.names() {
                     valid_pkg_names.push(pkg_name);
                 }
             }

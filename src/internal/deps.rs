@@ -19,25 +19,25 @@ impl fmt::Display for DepPkgs<'_> {
 pub struct Deps<'a>(HashMap<&'a str, DepPkgs<'a>>);
 
 impl<'a> Deps<'a> {
-    pub fn new(pkgs: &repodb_parser::PkgMap) -> anyhow::Result<Deps> {
+    pub fn new(pkgs: &repodb_parser::Pkgs) -> anyhow::Result<Deps> {
         let mut deps = Deps(HashMap::new());
 
-        for (pkg_name, pkg) in pkgs.iter() {
+        for pkg in pkgs.packages() {
             for dep in pkg
                 .deps
                 .iter()
                 .chain(pkg.make_deps.iter())
                 .chain(pkg.check_deps.iter())
-                .collect::<Vec<&repodb_parser::pkg::Dep>>()
+                .collect::<Vec<&repodb_parser::dep::Dep>>()
             {
                 if deps.0.contains_key(dep.pkg_name.as_str()) {
                     deps.0
                         .get_mut(dep.pkg_name.as_str())
                         .unwrap()
                         .0
-                        .push(pkg_name);
+                        .push(&pkg.name);
                 } else {
-                    deps.0.insert(&dep.pkg_name, DepPkgs(vec![pkg_name]));
+                    deps.0.insert(&dep.pkg_name, DepPkgs(vec![&pkg.name]));
                 };
             }
         }

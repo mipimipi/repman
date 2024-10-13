@@ -226,7 +226,7 @@ impl AurData {
     /// Package base is required to be able to clone the package repository lateron
     pub fn pkg_updates<'a>(
         &'a self,
-        db_pkgs: &'static repodb_parser::PkgMap,
+        db_pkgs: &'static repodb_parser::Pkgs,
     ) -> anyhow::Result<Vec<PkgUpd<'a>>> {
         let mut pkg_upds: Vec<PkgUpd> = vec![];
 

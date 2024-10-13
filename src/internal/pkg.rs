@@ -284,7 +284,7 @@ impl Pkg {
         Ok(())
     }
 
-    /// Returns name of package that is stored in package file
+    /// Returns the name of the package that is stored in the package file
     pub fn name(&self) -> String {
         let captures = RE_PKG_FILE
             .captures(self.as_ref().to_str()
@@ -295,6 +295,28 @@ impl Pkg {
             .unwrap_or_else(|| panic!("Cannot extract package name from file"))
             .as_str()
             .to_string()
+    }
+
+    /// Returns the version of the package that is stored in the package file.
+    /// The result is a concatenation of the package version and the package
+    // release as maintained in the PKGBUILD file
+    pub fn version(&self) -> String {
+        let captures = RE_PKG_FILE
+            .captures(self.as_ref().to_str()
+		      .unwrap_or_else(|| panic!("Cannot extract package version from file since file path cannot be converted into a string")))
+            .unwrap_or_else(|| panic!("Cannot extract package version from file since file is not a valid package file"));
+
+        format!(
+            "{}-{}",
+            captures
+                .get(3)
+                .unwrap_or_else(|| panic!("Cannot extract package version from file"))
+                .as_str(),
+            captures
+                .get(4)
+                .unwrap_or_else(|| panic!("Cannot extract package release from file"))
+                .as_str()
+        )
     }
 
     /// Removes all files belonging to package stored in package file from `dir`.
