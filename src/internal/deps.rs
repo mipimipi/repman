@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{collections::HashMap, fmt};
 
 pub struct DepPkgs<'a>(Vec<&'a str>);

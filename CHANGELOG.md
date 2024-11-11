@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 # Changelog
 
 ## [Release 0.7.11](https://gitlab.com/mipimipi/repman/tags/v0.7.11) (2024-10-13)

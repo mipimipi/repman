@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use crate::internal::{cfg, repo::Repo};
 use anyhow::{anyhow, Context};
 use arch_msgs::*;

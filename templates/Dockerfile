@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 ################################################################################
 # This is a template Dockerfile. Replace '{{BASE_IMAGE}}' by a real image name #
 # before using                                                                 #

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use crate::internal::{cfg, common::*};
 use alpm::vercmp;
 use anyhow::{anyhow, Context};

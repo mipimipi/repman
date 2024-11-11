@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Pipeline to build repman images for different architectures and store them
 # under a multi-arch manifest on docker hub.
 # The architecture-specific images are built in child pipelines (one for each

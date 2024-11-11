@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 PROG=repman
 
 # Set project VERSION to last tag name. If no tag exists, set it to v0.0.0

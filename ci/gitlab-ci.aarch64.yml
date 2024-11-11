@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Jobs to build repman for aarch64. The build job is executed on a server in the
 # Hetzner cloud. The server is started prior to the build job (start_server) and
 # stopped afterwards (stop_server). The resulting docker image is pushed to
