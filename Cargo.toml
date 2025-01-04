@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+# SPDX-FileCopyrightText: 2019-2025 Michael Picht <mipi@fsfe.org>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -23,7 +23,7 @@ alpm = { version = "4", features = [
 ] } # Workaround (see https://github.com/archlinux/alpm.rs/issues/35, requires clang)
 anyhow = "1"
 arch_msgs = "0.2"
-cached = "0.53"
+cached = "0.54"
 clap = { version = "4", features = ["derive"] }
 const_format = "0.2"
 dialoguer = "0.11"
