@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+# SPDX-FileCopyrightText: 2019-2025 Michael Picht <mipi@fsfe.org>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -17,14 +17,15 @@ WORKDIR /build
 ENV PATH="/root/.cargo/bin:${PATH}"
 ENV RUSTUP_HOME="/root/.rustup"
 # 1. Disable space check in pacman. This is necessary since the free disk space
-#    might not reported properly inside the container. In that case, pacman
+#    might not be reported properly inside the container. In that case, pacman
 #    could stop with an error (see https://github.com/docker/for-mac/issues/5433)
-# 2. Install required software (clang is only required because of this
+# 2. Disable sandbox (see https://bbs.archlinux.org/viewtopic.php?id=299402) 
+# 3. Install required software (clang is only required because of this
 #    workaround: https://github.com/archlinux/alpm.rs/issues/35) and clean
 #    package cache afterwards
-# 3. Set up rust
-# 4. Build repman
-RUN sed -i '/CheckSpace/d' /etc/pacman.conf && \
+# 4. Set up rust
+# 5. Build repman
+RUN sed -i 's/CheckSpace/#CheckSpace/g;s/#DisableSandbox/DisableSandbox/g' /etc/pacman.conf && \
     pacman --noconfirm -Syu asciidoctor clang gcc git make pkg-config rustup && \
     pacman --noconfirm -Scc && \
     rustup install --profile minimal stable && \
@@ -42,14 +43,15 @@ COPY --from=builder /build/cfg/${PROG}.conf /etc/${PROG}.conf
 # 1. Switch off debug option in makepkg.conf since this leads to building
 #    ...-debug packages (which is not wanted)
 # 2. Disable space check in pacman. This is necessary since the free disk space
-#    might not reported properly inside the container. In that case, pacman
+#    might not be reported properly inside the container. In that case, pacman
 #    could stop with an error (see https://github.com/docker/for-mac/issues/5433)
-# 3. Install dependencies and clean package cache afterwards
-# 4. Configure sudo (sudo is required by the scripts that repman is calling)
-# 5. Create user to execute repman (repman cannot be executed as root since it
+# 3. Disable sandbox (see https://bbs.archlinux.org/viewtopic.php?id=299402) 
+# 4. Install dependencies and clean package cache afterwards
+# 5. Configure sudo (sudo is required by the scripts that repman is calling)
+# 6. Create user to execute repman (repman cannot be executed as root since it
 #    ultimately calls makepkg which cannot be executed as root)
-RUN sed -i 's/ debug/ \!debug/g;s/(debug/(\!debug/g'  /etc/makepkg.conf && \
-    sed -i '/CheckSpace/d' /etc/pacman.conf && \
+RUN sed -i 's/ debug/ \!debug/g;s/(debug/(\!debug/g' /etc/makepkg.conf && \
+    sed -i 's/CheckSpace/#CheckSpace/g;s/#DisableSandbox/DisableSandbox/g' /etc/pacman.conf && \
     pacman --noconfirm -Syu base-devel  && \
     pacman --noconfirm -Scc && \
     echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
