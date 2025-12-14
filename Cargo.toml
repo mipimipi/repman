@@ -4,7 +4,7 @@
 
 [package]
 name = "repman"
-version = "0.11.8"
+version = "0.11.9"
 authors = ["Michael Picht <mipi@fsfe.org>"]
 license = "GPL-3.0-or-later"
 description = "repman helps to manage custom repositories for Arch Linux packages"
