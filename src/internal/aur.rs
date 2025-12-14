@@ -74,8 +74,8 @@ pub struct PkgUpd<'a> {
 /// - pkg_name2base contains a mapping between package names and their
 ///   corresponding package bases. I.e., in case of split packages their
 ///   could be entries like so:
-///     pkg_name1 -> pkg_base1
-///     pkg_name2 -> pkg_base1
+///   pkg_name1 -> pkg_base1
+///   pkg_name2 -> pkg_base1
 ///   In this case pkg_infos would only contain an entry for pkg_base1
 pub struct AurData {
     pkg_name2base: PkgName2Base,

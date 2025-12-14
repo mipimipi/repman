@@ -1553,7 +1553,7 @@ impl Repo {
     /// names of all packages contained in the current repository are returned.
     /// Otherwise, only the names are returned that are contained in `pkg_names`
     /// and where the corresponding package is contained in the current repository
-    fn valid_pkg_names<'a, S>(&'a self, pkg_names: Option<&'a [S]>) -> anyhow::Result<Vec<&str>>
+    fn valid_pkg_names<'a, S>(&'a self, pkg_names: Option<&'a [S]>) -> anyhow::Result<Vec<&'a str>>
     where
         S: AsRef<str> + Display,
     {

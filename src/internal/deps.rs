@@ -23,7 +23,7 @@ impl fmt::Display for DepPkgs<'_> {
 pub struct Deps<'a>(HashMap<&'a str, DepPkgs<'a>>);
 
 impl<'a> Deps<'a> {
-    pub fn new(pkgs: &repodb_parser::Pkgs) -> anyhow::Result<Deps> {
+    pub fn new(pkgs: &repodb_parser::Pkgs) -> anyhow::Result<Deps<'_>> {
         let mut deps = Deps(HashMap::new());
 
         for pkg in pkgs.packages() {
@@ -53,7 +53,7 @@ impl<'a> Deps<'a> {
         self.0.contains_key(dep)
     }
 
-    pub fn get(&self, pkg_name: &str) -> Option<&DepPkgs> {
+    pub fn get(&self, pkg_name: &str) -> Option<&DepPkgs<'_>> {
         self.0.get(pkg_name)
     }
 }

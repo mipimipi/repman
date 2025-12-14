@@ -23,12 +23,12 @@ alpm = { version = "4", features = [
 ] } # Workaround (see https://github.com/archlinux/alpm.rs/issues/35, requires clang)
 anyhow = "1.0"
 arch_msgs = "0.2"
-cached = "0.55"
+cached = "0.56"
 clap = { version = "4.5", features = ["derive"] }
 const_format = "0.2"
-dialoguer = "0.11"
+dialoguer = "0.12"
 dirs = "6.0"
-duct = "0.13"
+duct = "1"
 glob = "0.3"
 indoc = "2.0"
 lazy_static = "1"
@@ -40,5 +40,5 @@ scopeguard = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sudo = "0.6"
-toml = "0.8"
+toml = "0.9"
 url = "2"
