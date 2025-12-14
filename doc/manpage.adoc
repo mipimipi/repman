@@ -1,4 +1,6 @@
 // SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 = repman(8) 
 Michael Picht
 Version 0.7.12
