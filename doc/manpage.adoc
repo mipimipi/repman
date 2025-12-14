@@ -1,5 +1,4 @@
 // SPDX-FileCopyrightText: 2019-2024 Michael Picht <mipi@fsfe.org>
-Version 0.11.9
 
 = repman(8) 
 Michael Picht
